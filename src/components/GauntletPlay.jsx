@@ -16,28 +16,6 @@ import { db } from '../lib/firebase.js';
 import { calculateScoreBreakdown, formatDuration } from '../utils/scoring.js';
 import { getWeekId, getYesterdayId } from '../utils/date.js';
 
-function StatusBadge({ status }) {
-  const mapping = {
-    locked: 'border-slate-800 text-slate-400',
-    active: 'border-blue-400 text-blue-200',
-    passed: 'border-blue-500 bg-blue-500/10 text-blue-200',
-    failed: 'border-rose-500 bg-rose-500/10 text-rose-200',
-    skipped: 'border-amber-500 bg-amber-500/10 text-amber-200',
-  };
-  const label = {
-    locked: 'Ready',
-    active: 'In progress',
-    passed: 'Cleared',
-    failed: 'Failed',
-    skipped: 'Skipped',
-  };
-  return (
-    <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-widest ${mapping[status]}`}>
-      {label[status]}
-    </span>
-  );
-}
-
 function formatDisplayDate(dateString) {
   if (!dateString) return null;
   const [year, month, day] = dateString.split('-');
@@ -194,6 +172,19 @@ export function GauntletPlay() {
     const [year, month, day] = todayId.split('-');
     return `${month} ${day} ${year}`;
   }, [todayId]);
+
+  const { completedCount, progressPercentage, nextChallengeNumber } = useMemo(() => {
+    const finishedStatuses = new Set(['passed', 'failed', 'skipped']);
+    const completed = state.statuses.filter((item) => finishedStatuses.has(item.status)).length;
+    const totalChallenges = selection.length || 1;
+    const percentage = Math.round((completed / totalChallenges) * 100);
+    const nextChallenge = Math.min(completed + 1, selection.length);
+    return {
+      completedCount: completed,
+      progressPercentage: percentage,
+      nextChallengeNumber: nextChallenge,
+    };
+  }, [selection.length, state.statuses]);
 
   const displayedSummary = useMemo(() => {
     if (hasPlayedToday && existingResult) {
@@ -526,33 +517,24 @@ export function GauntletPlay() {
               </div>
             )}
           </div>
-          <ol className="grid gap-3 sm:grid-cols-2">
-            {selection.map((game, index) => {
-              const status = state.statuses[index]?.status ?? 'locked';
-              return (
-                <li
-                  key={game.id}
-                  className={`flex flex-col gap-2 rounded-2xl border px-4 py-4 shadow-lg transition ${
-                    status === 'passed'
-                      ? 'border-blue-500/60 bg-blue-500/10 shadow-blue-500/10'
-                      : status === 'failed'
-                        ? 'border-rose-500/60 bg-rose-500/10 shadow-rose-500/10'
-                        : status === 'skipped'
-                          ? 'border-amber-500/60 bg-amber-500/10 shadow-amber-500/10'
-                          : status === 'active'
-                            ? 'border-blue-400/60 bg-slate-900/60 shadow-blue-500/20'
-                            : 'border-slate-800/60 bg-slate-900/40 shadow-slate-900/40'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">{game.name}</p>
-                    <StatusBadge status={status} />
-                  </div>
-                  <p className="text-xs text-slate-300">Challenge #{index + 1}</p>
-                </li>
-              );
-            })}
-          </ol>
+          <div className="rounded-2xl border border-white/5 bg-slate-950/60 p-6 shadow-inner shadow-black/40">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-400">Progress</p>
+            <p className="mt-2 text-sm text-slate-300">
+              {isComplete
+                ? 'All challenges complete. Great work!'
+                : `Challenge ${nextChallengeNumber} of ${selection.length}`}
+            </p>
+            <div className="mt-4 h-2 rounded-full bg-white/10">
+              <div
+                className="h-2 rounded-full bg-blue-400 transition-[width]"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+            <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+              <span>Completed</span>
+              <span>{completedCount} / {selection.length}</span>
+            </div>
+          </div>
         </div>
       </div>
       <aside className="space-y-6">
