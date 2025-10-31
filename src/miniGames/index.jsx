@@ -33,12 +33,12 @@ function InputGame({ challenge, onPass, onFail, onSkip }) {
           autoFocus
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          className="w-full max-w-xs rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-center text-lg text-white shadow-lg shadow-slate-900/50 focus:border-emerald-400 focus:outline-none"
+          className="w-full max-w-xs rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-center text-lg text-white shadow-lg shadow-slate-900/50 focus:border-blue-400 focus:outline-none"
         />
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            className="rounded-full bg-emerald-500 px-6 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"
+            className="rounded-full bg-blue-500 px-6 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 hover:bg-blue-400"
           >
             Submit
           </button>
@@ -54,7 +54,7 @@ function InputGame({ challenge, onPass, onFail, onSkip }) {
           <p className="text-sm font-medium text-rose-400">Not quite! Try again tomorrow.</p>
         ) : null}
         {status === 'pass' ? (
-          <p className="text-sm font-medium text-emerald-400">Success!</p>
+          <p className="text-sm font-medium text-blue-400">Success!</p>
         ) : null}
       </form>
     </div>
@@ -91,9 +91,9 @@ function MultipleChoiceGame({ challenge, onPass, onFail, onSkip }) {
             className={`rounded-xl border px-4 py-3 text-lg font-semibold shadow-lg transition hover:-translate-y-0.5 ${
               selection === option
                 ? challenge.accept(option)
-                  ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300'
+                  ? 'border-blue-500 bg-blue-500/10 text-blue-300'
                   : 'border-rose-500 bg-rose-500/10 text-rose-300'
-                : 'border-slate-800 bg-slate-900 text-white hover:border-emerald-400'
+                : 'border-slate-800 bg-slate-900 text-white hover:border-blue-400'
             }`}
           >
             {option}
@@ -113,7 +113,7 @@ function MultipleChoiceGame({ challenge, onPass, onFail, onSkip }) {
         <p className="text-center text-sm font-medium text-rose-400">Tough luck! That wasn&apos;t it.</p>
       ) : null}
       {status === 'pass' ? (
-        <p className="text-center text-sm font-medium text-emerald-400">Nicely done.</p>
+        <p className="text-center text-sm font-medium text-blue-400">Nicely done.</p>
       ) : null}
     </div>
   );
@@ -157,7 +157,7 @@ function OrderButtonsGame({ challenge, onPass, onFail, onSkip }) {
             key={value}
             type="button"
             onClick={() => handlePick(value)}
-            className="rounded-2xl border border-slate-800 bg-slate-900 px-6 py-4 text-2xl font-bold text-emerald-300 shadow-lg shadow-emerald-500/10 transition hover:-translate-y-0.5 hover:border-emerald-500"
+            className="rounded-2xl border border-slate-800 bg-slate-900 px-6 py-4 text-2xl font-bold text-blue-300 shadow-lg shadow-blue-500/10 transition hover:-translate-y-0.5 hover:border-blue-500"
           >
             {value}
           </button>
@@ -165,7 +165,7 @@ function OrderButtonsGame({ challenge, onPass, onFail, onSkip }) {
       </div>
       <div className="flex justify-center gap-2 text-sm text-slate-400">
         {progress.map((value) => (
-          <span key={value} className="rounded-full border border-emerald-500/40 px-3 py-1 text-emerald-300">
+          <span key={value} className="rounded-full border border-blue-500/40 px-3 py-1 text-blue-300">
             {value}
           </span>
         ))}
@@ -183,7 +183,7 @@ function OrderButtonsGame({ challenge, onPass, onFail, onSkip }) {
         <p className="text-center text-sm font-medium text-rose-400">Out of order! Keep practicing.</p>
       ) : null}
       {status === 'pass' ? (
-        <p className="text-center text-sm font-medium text-emerald-400">Perfect order.</p>
+        <p className="text-center text-sm font-medium text-blue-400">Perfect order.</p>
       ) : null}
     </div>
   );
@@ -222,7 +222,7 @@ function ColorWordGame({ challenge, onPass, onFail, onSkip }) {
             key={option}
             type="button"
             onClick={() => choose(option)}
-            className="rounded-xl border border-slate-800 bg-slate-900 px-5 py-3 text-lg font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:border-emerald-500"
+            className="rounded-xl border border-slate-800 bg-slate-900 px-5 py-3 text-lg font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:border-blue-500"
           >
             {option}
           </button>
@@ -241,7 +241,7 @@ function ColorWordGame({ challenge, onPass, onFail, onSkip }) {
         <p className="text-center text-sm font-medium text-rose-400">Color tricked you this time.</p>
       ) : null}
       {status === 'pass' ? (
-        <p className="text-center text-sm font-medium text-emerald-400">You saw through the illusion.</p>
+        <p className="text-center text-sm font-medium text-blue-400">You saw through the illusion.</p>
       ) : null}
     </div>
   );
@@ -268,7 +268,7 @@ function TrueFalseGame({ challenge, onPass, onFail, onSkip }) {
         <button
           type="button"
           onClick={() => choose('True')}
-          className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-8 py-3 text-lg font-semibold text-emerald-300 shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:border-emerald-500"
+          className="rounded-full border border-blue-500/40 bg-blue-500/10 px-8 py-3 text-lg font-semibold text-blue-300 shadow-lg shadow-blue-500/20 transition hover:-translate-y-0.5 hover:border-blue-500"
         >
           True
         </button>
@@ -293,7 +293,7 @@ function TrueFalseGame({ challenge, onPass, onFail, onSkip }) {
         <p className="text-center text-sm font-medium text-rose-400">Not quite.</p>
       ) : null}
       {status === 'pass' ? (
-        <p className="text-center text-sm font-medium text-emerald-400">Correct!</p>
+        <p className="text-center text-sm font-medium text-blue-400">Correct!</p>
       ) : null}
     </div>
   );

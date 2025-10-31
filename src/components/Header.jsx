@@ -4,10 +4,10 @@ export function Header() {
   const { user, signIn, signOut, initializing } = useAuth();
 
   return (
-    <header className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-emerald-500/5 backdrop-blur">
+    <header className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-blue-500/5 backdrop-blur">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.4em] text-emerald-400">Daily Challenge</p>
+          <p className="text-sm uppercase tracking-[0.4em] text-blue-400">Daily Challenge</p>
           <h1 className="text-4xl font-black text-white sm:text-5xl">Amer Gauntlet</h1>
         </div>
         <div className="flex items-center gap-3">
@@ -21,7 +21,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={signOut}
-                className="rounded-full border border-emerald-400 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-300 transition hover:-translate-y-0.5 hover:border-emerald-300"
+                className="rounded-full border border-blue-400 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-blue-200 transition hover:-translate-y-0.5 hover:border-blue-300"
               >
                 Sign out
               </button>
@@ -30,7 +30,7 @@ export function Header() {
             <button
               type="button"
               onClick={() => signIn()}
-              className="rounded-full bg-emerald-400 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-950 shadow-lg shadow-emerald-500/40 transition hover:-translate-y-0.5 hover:bg-emerald-300"
+              className="rounded-full bg-blue-500 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-950 shadow-lg shadow-blue-500/40 transition hover:-translate-y-0.5 hover:bg-blue-400"
             >
               Sign in with Google
             </button>

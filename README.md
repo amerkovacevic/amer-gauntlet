@@ -81,11 +81,11 @@ users/{uid}
   updatedAt
 ```
 
-You may need to create Firestore composite indexes for the leaderboard queries (`score` descending with filters on `weekId`).
+You may need to create Firestore composite indexes for the leaderboard queries (`score` descending with filters on `weekId`). Deploy the security rules in [`firestore.rules`](firestore.rules) to enforce leaderboard writes from authenticated players only.
 
 ## Styling
 
-The interface mirrors the glassmorphism look of the Pickup Soccer and FM Team Draw projects—soft gradients, frosted cards, and neon emerald highlights. Tailwind CSS powers all styling so you can quickly tweak the visual identity.
+The interface mirrors the glassmorphism look of the Pickup Soccer and FM Team Draw projects—soft gradients, frosted cards, and electric blue highlights. Tailwind CSS powers all styling so you can quickly tweak the visual identity.
 
 ## Deployment
 

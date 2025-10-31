@@ -6,9 +6,9 @@ import { Header } from './components/Header.jsx';
 function Background() {
   return (
     <div className="pointer-events-none fixed inset-0 overflow-hidden">
-      <div className="absolute -top-32 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-emerald-500/20 blur-[120px]" />
-      <div className="absolute bottom-0 right-0 h-[400px] w-[400px] translate-x-1/3 translate-y-1/3 rounded-full bg-sky-500/20 blur-[120px]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(15,118,110,0.15),_rgba(15,23,42,0.95))]" />
+      <div className="absolute -top-32 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-blue-500/20 blur-[120px]" />
+      <div className="absolute bottom-0 right-0 h-[400px] w-[400px] translate-x-1/3 translate-y-1/3 rounded-full bg-cyan-500/20 blur-[120px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.12),_rgba(15,23,42,0.95))]" />
     </div>
   );
 }
