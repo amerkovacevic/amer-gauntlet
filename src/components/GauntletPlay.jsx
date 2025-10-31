@@ -3,13 +3,12 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,
   limit,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
-  where,
 } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useGauntlet } from '../contexts/GauntletContext.jsx';
@@ -39,20 +38,41 @@ function StatusBadge({ status }) {
   );
 }
 
-function LeaderboardList({ entries }) {
+function formatDisplayDate(dateString) {
+  if (!dateString) return null;
+  const [year, month, day] = dateString.split('-');
+  if (!year || !month || !day) return dateString;
+  return `${month} ${day} ${year}`;
+}
+
+function LeaderboardList({ entries, showDate = false }) {
   if (!entries.length) {
-    return <p className="text-sm text-slate-400">No runs recorded yet.</p>;
+    return (
+      <p className="mt-2 rounded-xl border border-white/5 bg-slate-950/40 px-4 py-3 text-sm text-slate-400">
+        No runs recorded yet.
+      </p>
+    );
   }
 
   return (
-    <ul className="space-y-2">
-      {entries.map((entry) => (
+    <ul className="mt-2 space-y-2">
+      {entries.map((entry, index) => (
         <li
           key={entry.id}
-          className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/5 px-4 py-3 text-sm text-slate-200"
+          className={`grid items-center gap-3 rounded-2xl border border-white/8 bg-slate-950/60 px-4 py-3 text-sm text-slate-200 backdrop-blur ${
+            showDate ? 'grid-cols-[auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto]'
+          }`}
         >
-          <span className="font-semibold text-white">{entry.displayName}</span>
-          <span className="font-mono text-blue-300">{entry.score.toLocaleString()}</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-300">
+            {(index + 1).toString().padStart(2, '0')}
+          </span>
+          <span className="truncate font-semibold text-white">{entry.displayName}</span>
+          {showDate ? (
+            <span className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">
+              {formatDisplayDate(entry.date)}
+            </span>
+          ) : null}
+          <span className="font-mono text-blue-200">{entry.score.toLocaleString()}</span>
         </li>
       ))}
     </ul>
@@ -73,9 +93,12 @@ export function GauntletPlay() {
   const [syncStatus, setSyncStatus] = useState('idle');
   const [leaderboard, setLeaderboard] = useState({
     daily: [],
-    weekly: [],
     allTime: [],
   });
+  const [hasPlayedToday, setHasPlayedToday] = useState(false);
+  const [existingResult, setExistingResult] = useState(null);
+  const [checkingExistingRun, setCheckingExistingRun] = useState(false);
+  const [countdown, setCountdown] = useState(null);
 
   useEffect(() => {
     setSyncStatus('idle');
@@ -84,13 +107,34 @@ export function GauntletPlay() {
   const currentGame = gauntlet.currentGame;
   const ActiveGameComponent = currentGame?.Component ?? null;
 
-  const summary = useMemo(() => ({
-    score,
-    passes,
-    skips,
-    fails,
-    totalTime: Math.round(totalTime),
-  }), [score, passes, skips, fails, totalTime]);
+  const summary = useMemo(
+    () => ({
+      score,
+      passes,
+      skips,
+      fails,
+      totalTime: Math.round(totalTime),
+    }),
+    [score, passes, skips, fails, totalTime],
+  );
+
+  const formattedToday = useMemo(() => {
+    const [year, month, day] = todayId.split('-');
+    return `${month} ${day} ${year}`;
+  }, [todayId]);
+
+  const displayedSummary = useMemo(() => {
+    if (hasPlayedToday && existingResult) {
+      return {
+        score: existingResult.score ?? summary.score,
+        passes: existingResult.passes ?? summary.passes,
+        skips: existingResult.skips ?? summary.skips,
+        fails: existingResult.fails ?? summary.fails,
+        totalTime: existingResult.totalTime ?? summary.totalTime,
+      };
+    }
+    return summary;
+  }, [hasPlayedToday, existingResult, summary]);
 
   useEffect(() => {
     if (!isComplete || !user || syncStatus === 'synced') return;
@@ -148,6 +192,8 @@ export function GauntletPlay() {
         );
         if (!cancelled) {
           setSyncStatus('synced');
+          setHasPlayedToday(true);
+          setExistingResult(payload);
         }
       } catch (error) {
         console.error('Failed to sync result', error);
@@ -162,36 +208,102 @@ export function GauntletPlay() {
   }, [isComplete, user, summary, todayId, syncStatus]);
 
   useEffect(() => {
-    async function fetchLeaderboard() {
-      const dailyQuery = query(
-        collection(db, 'dailyGauntlets', todayId, 'results'),
-        orderBy('score', 'desc'),
-        limit(10),
-      );
-      const weekId = getWeekId(todayId);
-      const weeklyQuery = query(
-        collection(db, 'runs'),
-        where('weekId', '==', weekId),
-        orderBy('score', 'desc'),
-        limit(10),
-      );
-      const allTimeQuery = query(collection(db, 'runs'), orderBy('score', 'desc'), limit(10));
-      const [dailySnap, weeklySnap, allTimeSnap] = await Promise.all([
-        getDocs(dailyQuery),
-        getDocs(weeklyQuery),
-        getDocs(allTimeQuery),
-      ]);
-      setLeaderboard({
-        daily: dailySnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
-        weekly: weeklySnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
-        allTime: allTimeSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
-      });
+    let ignore = false;
+    if (!user) {
+      setHasPlayedToday(false);
+      setExistingResult(null);
+      setCountdown(null);
+      setCheckingExistingRun(false);
+      return;
     }
+    setCheckingExistingRun(true);
+    const dailyRef = doc(db, 'dailyGauntlets', todayId, 'results', user.uid);
+    getDoc(dailyRef)
+      .then((snapshot) => {
+        if (ignore) return;
+        if (snapshot.exists()) {
+          setHasPlayedToday(true);
+          setExistingResult(snapshot.data());
+        } else {
+          setHasPlayedToday(false);
+          setExistingResult(null);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to check today\'s run', error);
+      })
+      .finally(() => {
+        if (!ignore) {
+          setCheckingExistingRun(false);
+        }
+      });
 
-    fetchLeaderboard().catch((error) => console.error('Failed to load leaderboards', error));
-  }, [todayId, syncStatus]);
+    return () => {
+      ignore = true;
+    };
+  }, [user, todayId]);
 
-  const canPlay = Boolean(user);
+  useEffect(() => {
+    if (!user || hasPlayedToday || initializing || checkingExistingRun) {
+      if (countdown !== null) {
+        setCountdown(null);
+      }
+      return;
+    }
+    if (countdown === null) {
+      setCountdown(3);
+    }
+  }, [user, hasPlayedToday, initializing, checkingExistingRun, countdown]);
+
+  useEffect(() => {
+    if (countdown === null || countdown <= 0) return undefined;
+    const timeout = setTimeout(() => {
+      setCountdown((prev) => {
+        if (prev === null) return prev;
+        return Math.max(prev - 1, 0);
+      });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [countdown]);
+
+  useEffect(() => {
+    setLeaderboard({ daily: [], allTime: [] });
+    const dailyQuery = query(
+      collection(db, 'dailyGauntlets', todayId, 'results'),
+      orderBy('score', 'desc'),
+      limit(10),
+    );
+    const allTimeQuery = query(collection(db, 'runs'), orderBy('score', 'desc'), limit(5));
+
+    const unsubscribeDaily = onSnapshot(
+      dailyQuery,
+      (snapshot) => {
+        setLeaderboard((prev) => ({
+          ...prev,
+          daily: snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
+        }));
+      },
+      (error) => console.error('Failed to load daily leaderboard', error),
+    );
+    const unsubscribeAllTime = onSnapshot(
+      allTimeQuery,
+      (snapshot) => {
+        setLeaderboard((prev) => ({
+          ...prev,
+          allTime: snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
+        }));
+      },
+      (error) => console.error('Failed to load all-time leaderboard', error),
+    );
+
+    return () => {
+      unsubscribeDaily();
+      unsubscribeAllTime();
+    };
+  }, [todayId]);
+
+  const canPlay = Boolean(user) && !hasPlayedToday && countdown === 0 && !isComplete;
+  const countdownActive = countdown !== null && countdown > 0;
   const handlePass = () => {
     if (!canPlay) return;
     gauntlet.recordPass(state.currentIndex);
@@ -211,14 +323,14 @@ export function GauntletPlay() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-semibold text-white">Today&apos;s Gauntlet</h2>
-            <p className="text-sm uppercase tracking-[0.3em] text-blue-400">{todayId}</p>
+            <p className="text-sm uppercase tracking-[0.3em] text-blue-400">{formattedToday}</p>
           </div>
           <div className="rounded-2xl border border-white/5 bg-slate-950/60 p-6 shadow-inner shadow-black/40">
             {initializing ? (
               <div className="space-y-3 text-center text-sm text-slate-300">
                 <p>Loading your profile…</p>
               </div>
-            ) : !canPlay ? (
+            ) : !user ? (
               <div className="space-y-4 text-center">
                 <h3 className="text-3xl font-semibold text-white">Sign in to play</h3>
                 <p className="text-sm text-slate-300">
@@ -227,10 +339,51 @@ export function GauntletPlay() {
                 <button
                   type="button"
                   onClick={() => signIn()}
-                  className="rounded-full bg-blue-500 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-950 shadow-lg shadow-blue-500/40 transition hover:-translate-y-0.5 hover:bg-blue-400"
+                  className="rounded-full border border-white/40 bg-white/90 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-900 shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-white"
                 >
                   Sign in with Google
                 </button>
+              </div>
+            ) : checkingExistingRun ? (
+              <div className="space-y-3 text-center text-sm text-slate-300">
+                <p>Checking your progress…</p>
+              </div>
+            ) : hasPlayedToday && !isComplete ? (
+              <div className="space-y-4 text-center">
+                <h3 className="text-3xl font-semibold text-white">You already played today</h3>
+                <p className="text-sm text-slate-300">
+                  Your best score for today is locked in. Come back tomorrow for a fresh gauntlet.
+                </p>
+                <div className="mx-auto grid max-w-md grid-cols-2 gap-3 text-left text-sm">
+                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Score</p>
+                    <p className="text-2xl font-bold text-white">{displayedSummary.score.toLocaleString()}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Time</p>
+                    <p className="text-2xl font-bold text-white">{formatDuration(displayedSummary.totalTime)}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Passes</p>
+                    <p className="text-2xl font-bold text-white">{displayedSummary.passes}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Skips / Fails</p>
+                    <p className="text-2xl font-bold text-white">{displayedSummary.skips} / {displayedSummary.fails}</p>
+                  </div>
+                </div>
+              </div>
+            ) : countdownActive || countdown === null ? (
+              <div className="space-y-3 text-center text-sm text-slate-300">
+                {countdownActive ? (
+                  <>
+                    <p className="text-3xl font-semibold text-white">Get ready…</p>
+                    <p className="text-6xl font-black text-blue-300">{countdown}</p>
+                    <p>Focus up! The gauntlet begins when the counter hits zero.</p>
+                  </>
+                ) : (
+                  <p>Preparing your gauntlet…</p>
+                )}
               </div>
             ) : currentGame && ActiveGameComponent && !isComplete ? (
               <ActiveGameComponent
@@ -251,19 +404,19 @@ export function GauntletPlay() {
                 <div className="grid grid-cols-2 gap-3 text-left text-sm">
                   <div className="rounded-xl border border-white/5 bg-white/5 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Score</p>
-                    <p className="text-2xl font-bold text-white">{summary.score.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-white">{displayedSummary.score.toLocaleString()}</p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-white/5 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Time</p>
-                    <p className="text-2xl font-bold text-white">{formatDuration(summary.totalTime)}</p>
+                    <p className="text-2xl font-bold text-white">{formatDuration(displayedSummary.totalTime)}</p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-white/5 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Passes</p>
-                    <p className="text-2xl font-bold text-white">{summary.passes}</p>
+                    <p className="text-2xl font-bold text-white">{displayedSummary.passes}</p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-white/5 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Skips / Fails</p>
-                    <p className="text-2xl font-bold text-white">{summary.skips} / {summary.fails}</p>
+                    <p className="text-2xl font-bold text-white">{displayedSummary.skips} / {displayedSummary.fails}</p>
                   </div>
                 </div>
                 {syncStatus === 'saving' ? (
@@ -306,18 +459,14 @@ export function GauntletPlay() {
       <aside className="space-y-6">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-blue-500/5 backdrop-blur">
           <h3 className="text-xl font-semibold text-white">Leaderboard</h3>
-          <div className="mt-4 space-y-6">
+          <div className="mt-5 space-y-6">
             <div>
               <h4 className="text-xs uppercase tracking-[0.3em] text-blue-400">Daily</h4>
               <LeaderboardList entries={leaderboard.daily} />
             </div>
             <div>
-              <h4 className="text-xs uppercase tracking-[0.3em] text-blue-400">This Week</h4>
-              <LeaderboardList entries={leaderboard.weekly} />
-            </div>
-            <div>
               <h4 className="text-xs uppercase tracking-[0.3em] text-blue-400">All Time</h4>
-              <LeaderboardList entries={leaderboard.allTime} />
+              <LeaderboardList entries={leaderboard.allTime} showDate />
             </div>
           </div>
         </div>
