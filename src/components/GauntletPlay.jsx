@@ -149,6 +149,7 @@ export function GauntletPlay() {
   const [existingResult, setExistingResult] = useState(null);
   const [checkingExistingRun, setCheckingExistingRun] = useState(false);
   const [countdown, setCountdown] = useState(null);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     setSyncStatus('idle');
@@ -303,6 +304,7 @@ export function GauntletPlay() {
       setExistingResult(null);
       setCountdown(null);
       setCheckingExistingRun(false);
+      setIsReady(false);
       return;
     }
     setCheckingExistingRun(true);
@@ -333,7 +335,16 @@ export function GauntletPlay() {
   }, [user, todayId]);
 
   useEffect(() => {
-    if (!user || hasPlayedToday || initializing || checkingExistingRun) {
+    if (!user || hasPlayedToday || initializing || checkingExistingRun || isComplete) {
+      if (countdown !== null) {
+        setCountdown(null);
+      }
+      if (isReady) {
+        setIsReady(false);
+      }
+      return;
+    }
+    if (!isReady) {
       if (countdown !== null) {
         setCountdown(null);
       }
@@ -342,7 +353,7 @@ export function GauntletPlay() {
     if (countdown === null) {
       setCountdown(3);
     }
-  }, [user, hasPlayedToday, initializing, checkingExistingRun, countdown]);
+  }, [user, hasPlayedToday, initializing, checkingExistingRun, isComplete, isReady, countdown]);
 
   useEffect(() => {
     if (countdown === null || countdown <= 0) return undefined;
@@ -395,6 +406,14 @@ export function GauntletPlay() {
 
   const canPlay = Boolean(user) && !hasPlayedToday && countdown === 0 && !isComplete;
   const countdownActive = countdown !== null && countdown > 0;
+  const showReadyPrompt =
+    Boolean(user) &&
+    !hasPlayedToday &&
+    !isComplete &&
+    !initializing &&
+    !checkingExistingRun &&
+    countdown === null &&
+    !isReady;
   const handlePass = () => {
     if (!canPlay) return;
     gauntlet.recordPass(state.currentIndex);
@@ -466,6 +485,20 @@ export function GauntletPlay() {
                 <div className="mx-auto max-w-md">
                   <ScoreBreakdownDetails summary={displayedSummary} />
                 </div>
+              </div>
+            ) : showReadyPrompt ? (
+              <div className="space-y-4 text-center">
+                <h3 className="text-3xl font-semibold text-white">Ready when you are</h3>
+                <p className="text-sm text-slate-300">
+                  Press ready to start the countdown for today&apos;s gauntlet.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsReady(true)}
+                  className="rounded-full border border-white/40 bg-blue-400/90 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-900 shadow-lg shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-400"
+                >
+                  I&apos;m ready
+                </button>
               </div>
             ) : !isComplete && (countdownActive || countdown === null) ? (
               <div className="space-y-3 text-center text-sm text-slate-300">
