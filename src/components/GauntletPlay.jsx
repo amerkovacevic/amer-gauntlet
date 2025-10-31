@@ -3,8 +3,8 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,
   limit,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -92,6 +92,11 @@ export function GauntletPlay() {
     totalTime: Math.round(totalTime),
   }), [score, passes, skips, fails, totalTime]);
 
+  const formattedToday = useMemo(() => {
+    const [year, month, day] = todayId.split('-');
+    return `${month} ${day} ${year}`;
+  }, [todayId]);
+
   useEffect(() => {
     if (!isComplete || !user || syncStatus === 'synced') return;
     let cancelled = false;
@@ -162,34 +167,58 @@ export function GauntletPlay() {
   }, [isComplete, user, summary, todayId, syncStatus]);
 
   useEffect(() => {
-    async function fetchLeaderboard() {
-      const dailyQuery = query(
-        collection(db, 'dailyGauntlets', todayId, 'results'),
-        orderBy('score', 'desc'),
-        limit(10),
-      );
-      const weekId = getWeekId(todayId);
-      const weeklyQuery = query(
-        collection(db, 'runs'),
-        where('weekId', '==', weekId),
-        orderBy('score', 'desc'),
-        limit(10),
-      );
-      const allTimeQuery = query(collection(db, 'runs'), orderBy('score', 'desc'), limit(10));
-      const [dailySnap, weeklySnap, allTimeSnap] = await Promise.all([
-        getDocs(dailyQuery),
-        getDocs(weeklyQuery),
-        getDocs(allTimeQuery),
-      ]);
-      setLeaderboard({
-        daily: dailySnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
-        weekly: weeklySnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
-        allTime: allTimeSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
-      });
-    }
+    setLeaderboard({ daily: [], weekly: [], allTime: [] });
+    const dailyQuery = query(
+      collection(db, 'dailyGauntlets', todayId, 'results'),
+      orderBy('score', 'desc'),
+      limit(10),
+    );
+    const weekId = getWeekId(todayId);
+    const weeklyQuery = query(
+      collection(db, 'runs'),
+      where('weekId', '==', weekId),
+      orderBy('score', 'desc'),
+      limit(10),
+    );
+    const allTimeQuery = query(collection(db, 'runs'), orderBy('score', 'desc'), limit(10));
 
-    fetchLeaderboard().catch((error) => console.error('Failed to load leaderboards', error));
-  }, [todayId, syncStatus]);
+    const unsubscribeDaily = onSnapshot(
+      dailyQuery,
+      (snapshot) => {
+        setLeaderboard((prev) => ({
+          ...prev,
+          daily: snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
+        }));
+      },
+      (error) => console.error('Failed to load daily leaderboard', error),
+    );
+    const unsubscribeWeekly = onSnapshot(
+      weeklyQuery,
+      (snapshot) => {
+        setLeaderboard((prev) => ({
+          ...prev,
+          weekly: snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
+        }));
+      },
+      (error) => console.error('Failed to load weekly leaderboard', error),
+    );
+    const unsubscribeAllTime = onSnapshot(
+      allTimeQuery,
+      (snapshot) => {
+        setLeaderboard((prev) => ({
+          ...prev,
+          allTime: snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
+        }));
+      },
+      (error) => console.error('Failed to load all-time leaderboard', error),
+    );
+
+    return () => {
+      unsubscribeDaily();
+      unsubscribeWeekly();
+      unsubscribeAllTime();
+    };
+  }, [todayId]);
 
   const canPlay = Boolean(user);
   const handlePass = () => {
@@ -211,7 +240,7 @@ export function GauntletPlay() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-semibold text-white">Today&apos;s Gauntlet</h2>
-            <p className="text-sm uppercase tracking-[0.3em] text-blue-400">{todayId}</p>
+            <p className="text-sm uppercase tracking-[0.3em] text-blue-400">{formattedToday}</p>
           </div>
           <div className="rounded-2xl border border-white/5 bg-slate-950/60 p-6 shadow-inner shadow-black/40">
             {initializing ? (
@@ -227,7 +256,7 @@ export function GauntletPlay() {
                 <button
                   type="button"
                   onClick={() => signIn()}
-                  className="rounded-full bg-blue-500 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-950 shadow-lg shadow-blue-500/40 transition hover:-translate-y-0.5 hover:bg-blue-400"
+                  className="rounded-full border border-white/40 bg-white/90 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-900 shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-white"
                 >
                   Sign in with Google
                 </button>

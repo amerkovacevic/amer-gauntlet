@@ -30,7 +30,7 @@ export function Header() {
             <button
               type="button"
               onClick={() => signIn()}
-              className="rounded-full bg-blue-500 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-950 shadow-lg shadow-blue-500/40 transition hover:-translate-y-0.5 hover:bg-blue-400"
+              className="rounded-full border border-white/40 bg-white/90 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-900 shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-white"
             >
               Sign in with Google
             </button>
@@ -38,7 +38,7 @@ export function Header() {
         </div>
       </div>
       <p className="max-w-3xl text-lg text-slate-200">
-        Five bite-sized mental challenges pulled from our vault of twenty mini games. Everyone sees the same gauntlet each day—race the clock, avoid skips, and build your streak.
+        Five bite-sized mental challenges pulled from our vault of twenty mini games. Everyone sees the same gauntlet each day. Race the clock, avoid skips, and build your streak.
       </p>
     </header>
   );
