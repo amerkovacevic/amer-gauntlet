@@ -1,9 +1,20 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { miniGames } from '../miniGames/index.jsx';
+import { coreGameIds, miniGames } from '../miniGames/index.jsx';
 import { getTodayId } from '../utils/date.js';
 import { createSeededRandom, pickFromArray } from '../utils/random.js';
 
 const GauntletContext = createContext();
+
+const CORE_GAME_ID_SET = new Set(coreGameIds);
+const CORE_GAMES = coreGameIds
+  .map((id) => {
+    const match = miniGames.find((game) => game.id === id);
+    if (!match) {
+      throw new Error(`Core game with id "${id}" is not defined.`);
+    }
+    return match;
+  });
+const ROTATING_POOL = miniGames.filter((game) => !CORE_GAME_ID_SET.has(game.id));
 
 const STATUS_LOCKED = 'locked';
 const STATUS_ACTIVE = 'active';
@@ -29,12 +40,14 @@ export function GauntletProvider({ children }) {
   const todayId = getTodayId();
   const selection = useMemo(() => {
     const seeded = createSeededRandom(`gauntlet-${todayId}`);
-    const picks = pickFromArray(seeded, miniGames, 5);
-    return picks.map((game, index) => ({
+    const dailyPicks = pickFromArray(seeded, ROTATING_POOL, 5);
+    const gamesForToday = [...CORE_GAMES, ...dailyPicks];
+    return gamesForToday.map((game, index) => ({
       id: game.id,
       name: game.name,
       Component: game.Component,
       challenge: game.createChallenge(`${todayId}-${index}`),
+      variant: CORE_GAME_ID_SET.has(game.id) ? 'core' : 'daily',
     }));
   }, [todayId]);
 
