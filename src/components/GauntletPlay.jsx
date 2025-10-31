@@ -460,7 +460,7 @@ export function GauntletPlay() {
                   <ScoreBreakdownDetails summary={displayedSummary} />
                 </div>
               </div>
-            ) : countdownActive || countdown === null ? (
+            ) : !isComplete && (countdownActive || countdown === null) ? (
               <div className="space-y-3 text-center text-sm text-slate-300">
                 {countdownActive ? (
                   <>
