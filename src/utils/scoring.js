@@ -4,11 +4,12 @@ export function calculateScore({
   fails,
   totalTime,
 }) {
-  const base = completed * 120;
-  const skipPenalty = skips * 40;
-  const failPenalty = fails * 75;
-  const timePenalty = Math.floor(totalTime * 0.8);
-  return Math.max(0, base - skipPenalty - failPenalty - timePenalty + completed * 25);
+  const completionBonus = completed * 200;
+  const accuracyBonus = Math.max(0, completed - fails) * 50;
+  const skipPenalty = skips * 75;
+  const failPenalty = fails * 125;
+  const timePenalty = Math.floor(totalTime * 0.5);
+  return Math.max(0, completionBonus + accuracyBonus - skipPenalty - failPenalty - timePenalty);
 }
 
 export function formatDuration(seconds) {

@@ -27,18 +27,12 @@ export function Header() {
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => signIn()}
-              className="rounded-full bg-blue-500 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-950 shadow-lg shadow-blue-500/40 transition hover:-translate-y-0.5 hover:bg-blue-400"
-            >
-              Sign in with Google
-            </button>
+            <span className="text-sm text-slate-300">Sign in below to enter the gauntlet.</span>
           )}
         </div>
       </div>
       <p className="max-w-3xl text-lg text-slate-200">
-        Five bite-sized mental challenges pulled from our vault of twenty mini games. Everyone sees the same gauntlet each day—race the clock, avoid skips, and build your streak.
+        Five bite-sized mental challenges pulled from our vault of twenty-five mini games. Everyone sees the same gauntlet each day. Race the clock, avoid skips, and build your streak.
       </p>
     </header>
   );
