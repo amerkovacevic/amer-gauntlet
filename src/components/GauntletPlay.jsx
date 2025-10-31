@@ -13,7 +13,7 @@ import {
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useGauntlet } from '../contexts/GauntletContext.jsx';
 import { db } from '../lib/firebase.js';
-import { calculateScore, formatDuration } from '../utils/scoring.js';
+import { calculateScore, formatDuration, getScoreBreakdown } from '../utils/scoring.js';
 import { getWeekId, getYesterdayId } from '../utils/date.js';
 
 function StatusBadge({ status }) {
@@ -79,6 +79,93 @@ function LeaderboardList({ entries, showDate = false }) {
   );
 }
 
+function ScoreSummary({ summary, breakdown }) {
+  const cleanClears = Math.max(0, summary.passes - summary.fails);
+  const timeSeconds = Math.max(0, Math.round(summary.totalTime ?? 0));
+  const detailRows = [
+    {
+      label: 'Completion bonus',
+      value: breakdown.completionBonus,
+      description: `${summary.passes} passes × 200`,
+    },
+    {
+      label: 'Accuracy bonus',
+      value: breakdown.accuracyBonus,
+      description: `${cleanClears} clean clears × 50`,
+    },
+    {
+      label: 'Skip penalty',
+      value: -breakdown.skipPenalty,
+      description: `${summary.skips} skips × 75`,
+    },
+    {
+      label: 'Fail penalty',
+      value: -breakdown.failPenalty,
+      description: `${summary.fails} fails × 125`,
+    },
+    {
+      label: 'Time penalty',
+      value: -breakdown.timePenalty,
+      description: `${timeSeconds} sec × 0.5`,
+    },
+  ];
+
+  const formatDelta = (value) => {
+    const sign = value >= 0 ? '+' : '−';
+    return `${sign}${Math.abs(value).toLocaleString()}`;
+  };
+
+  return (
+    <div className="space-y-4 text-left text-sm">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+          <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Score</p>
+          <p className="text-2xl font-bold text-white">{summary.score.toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+          <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Time</p>
+          <p className="text-2xl font-bold text-white">{formatDuration(summary.totalTime ?? 0)}</p>
+        </div>
+        <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+          <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Passes</p>
+          <p className="text-2xl font-bold text-white">{summary.passes}</p>
+        </div>
+        <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+          <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Skips / Fails</p>
+          <p className="text-2xl font-bold text-white">{summary.skips} / {summary.fails}</p>
+        </div>
+      </div>
+      <div className="rounded-2xl border border-white/5 bg-slate-950/60 p-4">
+        <h4 className="text-xs uppercase tracking-[0.3em] text-blue-400">Score breakdown</h4>
+        <ul className="mt-3 space-y-2">
+          {detailRows.map((row) => (
+            <li key={row.label} className="flex items-baseline justify-between gap-4">
+              <div>
+                <p className="font-medium text-white">{row.label}</p>
+                <p className="text-xs text-slate-400">{row.description}</p>
+              </div>
+              <span
+                className={`font-mono text-sm ${row.value >= 0 ? 'text-blue-200' : 'text-rose-200'}`}
+              >
+                {formatDelta(row.value)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 flex items-baseline justify-between border-t border-white/5 pt-3">
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-300">Final score</p>
+          <p className="font-mono text-lg font-semibold text-white">{breakdown.total.toLocaleString()}</p>
+        </div>
+        {breakdown.total === 0 && breakdown.rawTotal < 0 ? (
+          <p className="mt-2 text-xs text-slate-400">
+            Raw total {breakdown.rawTotal.toLocaleString()} floored at zero.
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function GauntletPlay() {
   const { user, signIn, initializing } = useAuth();
   const gauntlet = useGauntlet();
@@ -135,6 +222,17 @@ export function GauntletPlay() {
     }
     return summary;
   }, [hasPlayedToday, existingResult, summary]);
+
+  const displayedBreakdown = useMemo(
+    () =>
+      getScoreBreakdown({
+        completed: displayedSummary.passes,
+        skips: displayedSummary.skips,
+        fails: displayedSummary.fails,
+        totalTime: displayedSummary.totalTime,
+      }),
+    [displayedSummary],
+  );
 
   useEffect(() => {
     if (!isComplete || !user || syncStatus === 'synced') return;
@@ -354,23 +452,8 @@ export function GauntletPlay() {
                 <p className="text-sm text-slate-300">
                   Your best score for today is locked in. Come back tomorrow for a fresh gauntlet.
                 </p>
-                <div className="mx-auto grid max-w-md grid-cols-2 gap-3 text-left text-sm">
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Score</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.score.toLocaleString()}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Time</p>
-                    <p className="text-2xl font-bold text-white">{formatDuration(displayedSummary.totalTime)}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Passes</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.passes}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Skips / Fails</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.skips} / {displayedSummary.fails}</p>
-                  </div>
+                <div className="mx-auto max-w-md">
+                  <ScoreSummary summary={displayedSummary} breakdown={displayedBreakdown} />
                 </div>
               </div>
             ) : countdownActive || countdown === null ? (
@@ -401,24 +484,7 @@ export function GauntletPlay() {
                     ? 'Your score has been locked in. Come back tomorrow for the next Amer Gauntlet.'
                     : 'Sign in to save your streak and post on the leaderboards.'}
                 </p>
-                <div className="grid grid-cols-2 gap-3 text-left text-sm">
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Score</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.score.toLocaleString()}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Time</p>
-                    <p className="text-2xl font-bold text-white">{formatDuration(displayedSummary.totalTime)}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Passes</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.passes}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Skips / Fails</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.skips} / {displayedSummary.fails}</p>
-                  </div>
-                </div>
+                <ScoreSummary summary={displayedSummary} breakdown={displayedBreakdown} />
                 {syncStatus === 'saving' ? (
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Posting to leaderboards…</p>
                 ) : syncStatus === 'error' ? (
@@ -449,7 +515,9 @@ export function GauntletPlay() {
                     <p className="text-sm font-semibold text-white">{game.name}</p>
                     <StatusBadge status={status} />
                   </div>
-                  <p className="text-xs text-slate-300">Challenge #{index + 1}</p>
+                  <p className="text-xs text-slate-300">
+                    Challenge #{index + 1} · {game.variant === 'core' ? 'Core' : 'Daily'}
+                  </p>
                 </li>
               );
             })}
