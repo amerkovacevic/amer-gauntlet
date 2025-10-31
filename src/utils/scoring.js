@@ -1,15 +1,34 @@
-export function calculateScore({
+export function calculateScoreBreakdown({
   completed,
   skips,
   fails,
   totalTime,
 }) {
-  const completionBonus = completed * 200;
-  const accuracyBonus = Math.max(0, completed - fails) * 50;
-  const skipPenalty = skips * 75;
-  const failPenalty = fails * 125;
-  const timePenalty = Math.floor(totalTime * 0.5);
-  return Math.max(0, completionBonus + accuracyBonus - skipPenalty - failPenalty - timePenalty);
+  const safeCompleted = Math.max(0, completed);
+  const safeSkips = Math.max(0, skips);
+  const safeFails = Math.max(0, fails);
+  const safeTime = Math.max(0, totalTime);
+
+  const completionBonus = safeCompleted * 200;
+  const accuracyBonus = Math.max(0, safeCompleted - safeFails) * 50;
+  const skipPenalty = safeSkips * 75;
+  const failPenalty = safeFails * 125;
+  const timePenalty = Math.floor(safeTime * 0.5);
+
+  const total = Math.max(0, completionBonus + accuracyBonus - skipPenalty - failPenalty - timePenalty);
+
+  return {
+    completionBonus,
+    accuracyBonus,
+    skipPenalty,
+    failPenalty,
+    timePenalty,
+    total,
+  };
+}
+
+export function calculateScore(stats) {
+  return calculateScoreBreakdown(stats).total;
 }
 
 export function formatDuration(seconds) {

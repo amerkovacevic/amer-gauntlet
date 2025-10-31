@@ -13,7 +13,7 @@ import {
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useGauntlet } from '../contexts/GauntletContext.jsx';
 import { db } from '../lib/firebase.js';
-import { calculateScore, formatDuration } from '../utils/scoring.js';
+import { calculateScoreBreakdown, formatDuration } from '../utils/scoring.js';
 import { getWeekId, getYesterdayId } from '../utils/date.js';
 
 function StatusBadge({ status }) {
@@ -79,17 +79,82 @@ function LeaderboardList({ entries, showDate = false }) {
   );
 }
 
+function ScoreBreakdownDetails({ summary }) {
+  if (!summary?.breakdown) return null;
+
+  const { breakdown } = summary;
+  const formatContribution = (value, isPenalty = false) => {
+    if (!value) return '0';
+    const formatted = Math.abs(value).toLocaleString();
+    return `${isPenalty ? '−' : '+'}${formatted}`;
+  };
+
+  const accuracyCount = Math.max(0, (summary?.passes ?? 0) - (summary?.fails ?? 0));
+  const totalTime = summary?.totalTime ?? 0;
+
+  return (
+    <div className="rounded-2xl border border-white/5 bg-slate-950/50 p-4 text-left text-sm text-slate-200">
+      <h4 className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-300">Score breakdown</h4>
+      <ul className="mt-4 space-y-3">
+        <li className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-medium text-white">Completion bonus</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              {summary.passes} clears × 200
+            </p>
+          </div>
+          <span className="font-mono text-blue-200">{formatContribution(breakdown.completionBonus)}</span>
+        </li>
+        <li className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-medium text-white">Accuracy bonus</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              max({summary.passes} − {summary.fails}, 0) × 50 → {accuracyCount}
+            </p>
+          </div>
+          <span className="font-mono text-blue-200">{formatContribution(breakdown.accuracyBonus)}</span>
+        </li>
+        <li className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-medium text-white">Skip penalty</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              {summary.skips} skips × 75
+            </p>
+          </div>
+          <span className="font-mono text-rose-300">{formatContribution(breakdown.skipPenalty, true)}</span>
+        </li>
+        <li className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-medium text-white">Fail penalty</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              {summary.fails} fails × 125
+            </p>
+          </div>
+          <span className="font-mono text-rose-300">{formatContribution(breakdown.failPenalty, true)}</span>
+        </li>
+        <li className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-medium text-white">Time penalty</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              ⌊{totalTime} × 0.5⌋
+            </p>
+          </div>
+          <span className="font-mono text-rose-300">{formatContribution(breakdown.timePenalty, true)}</span>
+        </li>
+      </ul>
+      <div className="mt-4 flex items-baseline justify-between border-t border-white/5 pt-3">
+        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Final score</span>
+        <span className="font-mono text-lg text-blue-200">{summary.score.toLocaleString()}</span>
+      </div>
+    </div>
+  );
+}
+
 export function GauntletPlay() {
   const { user, signIn, initializing } = useAuth();
   const gauntlet = useGauntlet();
   const { todayId, selection, state, totals, isComplete } = gauntlet;
   const { passes, skips, fails, totalTime } = totals;
-  const score = calculateScore({
-    completed: passes,
-    skips,
-    fails,
-    totalTime,
-  });
   const [syncStatus, setSyncStatus] = useState('idle');
   const [leaderboard, setLeaderboard] = useState({
     daily: [],
@@ -107,16 +172,23 @@ export function GauntletPlay() {
   const currentGame = gauntlet.currentGame;
   const ActiveGameComponent = currentGame?.Component ?? null;
 
-  const summary = useMemo(
-    () => ({
-      score,
+  const summary = useMemo(() => {
+    const normalizedTotalTime = Math.round(totalTime);
+    const breakdown = calculateScoreBreakdown({
+      completed: passes,
+      skips,
+      fails,
+      totalTime: normalizedTotalTime,
+    });
+    return {
+      score: breakdown.total,
       passes,
       skips,
       fails,
-      totalTime: Math.round(totalTime),
-    }),
-    [score, passes, skips, fails, totalTime],
-  );
+      totalTime: normalizedTotalTime,
+      breakdown,
+    };
+  }, [passes, skips, fails, totalTime]);
 
   const formattedToday = useMemo(() => {
     const [year, month, day] = todayId.split('-');
@@ -125,12 +197,24 @@ export function GauntletPlay() {
 
   const displayedSummary = useMemo(() => {
     if (hasPlayedToday && existingResult) {
-      return {
+      const base = {
         score: existingResult.score ?? summary.score,
         passes: existingResult.passes ?? summary.passes,
         skips: existingResult.skips ?? summary.skips,
         fails: existingResult.fails ?? summary.fails,
         totalTime: existingResult.totalTime ?? summary.totalTime,
+      };
+      const breakdown = existingResult.breakdown
+        ? existingResult.breakdown
+        : calculateScoreBreakdown({
+            completed: base.passes,
+            skips: base.skips,
+            fails: base.fails,
+            totalTime: base.totalTime,
+          });
+      return {
+        ...base,
+        breakdown,
       };
     }
     return summary;
@@ -151,6 +235,13 @@ export function GauntletPlay() {
           skips: summary.skips,
           fails: summary.fails,
           totalTime: summary.totalTime,
+          breakdown: {
+            completionBonus: summary.breakdown.completionBonus,
+            accuracyBonus: summary.breakdown.accuracyBonus,
+            skipPenalty: summary.breakdown.skipPenalty,
+            failPenalty: summary.breakdown.failPenalty,
+            timePenalty: summary.breakdown.timePenalty,
+          },
           date: todayId,
           weekId: getWeekId(todayId),
           completedAt: serverTimestamp(),
@@ -257,13 +348,15 @@ export function GauntletPlay() {
 
   useEffect(() => {
     if (countdown === null || countdown <= 0) return undefined;
-    const timeout = setTimeout(() => {
+    const timeout = globalThis.setTimeout(() => {
       setCountdown((prev) => {
         if (prev === null) return prev;
         return Math.max(prev - 1, 0);
       });
     }, 1000);
-    return () => clearTimeout(timeout);
+    return () => {
+      globalThis.clearTimeout(timeout);
+    };
   }, [countdown]);
 
   useEffect(() => {
@@ -372,6 +465,9 @@ export function GauntletPlay() {
                     <p className="text-2xl font-bold text-white">{displayedSummary.skips} / {displayedSummary.fails}</p>
                   </div>
                 </div>
+                <div className="mx-auto max-w-md">
+                  <ScoreBreakdownDetails summary={displayedSummary} />
+                </div>
               </div>
             ) : countdownActive || countdown === null ? (
               <div className="space-y-3 text-center text-sm text-slate-300">
@@ -418,6 +514,9 @@ export function GauntletPlay() {
                     <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Skips / Fails</p>
                     <p className="text-2xl font-bold text-white">{displayedSummary.skips} / {displayedSummary.fails}</p>
                   </div>
+                </div>
+                <div className="mx-auto max-w-lg">
+                  <ScoreBreakdownDetails summary={displayedSummary} />
                 </div>
                 {syncStatus === 'saving' ? (
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Posting to leaderboards…</p>
