@@ -10,7 +10,7 @@ export function Header() {
           <p className="text-sm uppercase tracking-[0.4em] text-blue-400">Daily Challenge</p>
           <h1 className="text-4xl font-black text-white sm:text-5xl">Amer Gauntlet</h1>
         </div>
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           {initializing ? (
             <span className="text-sm text-slate-300">Loading…</span>
           ) : user ? (
@@ -29,10 +29,10 @@ export function Header() {
           ) : (
             <span className="text-sm text-slate-300">Sign in below to enter the gauntlet.</span>
           )}
-        </div>
+        </div> */}
       </div>
       <p className="max-w-3xl text-lg text-slate-200">
-        Five bite-sized mental challenges pulled from our vault of twenty-five mini games. Everyone sees the same gauntlet each day. Race the clock, avoid skips, and build your streak.
+        Five bite-sized mental challenges pulled from the vault. Race the clock, avoid skips, and build your streak.
       </p>
     </header>
   );
