@@ -16,6 +16,13 @@ import { db } from '../lib/firebase.js';
 import { calculateScoreBreakdown, formatDuration } from '../utils/scoring.js';
 import { getWeekId, getYesterdayId } from '../utils/date.js';
 
+const SCORE_FORMAT_OPTIONS = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+
+function formatScore(value) {
+  const safeValue = Number.isFinite(value) ? value : 0;
+  return safeValue.toLocaleString(undefined, SCORE_FORMAT_OPTIONS);
+}
+
 function formatDisplayDate(dateString) {
   if (!dateString) return null;
   const [year, month, day] = dateString.split('-');
@@ -50,7 +57,7 @@ function LeaderboardList({ entries, showDate = false }) {
               {formatDisplayDate(entry.date)}
             </span>
           ) : null}
-          <span className="font-mono text-blue-200">{entry.score.toLocaleString()}</span>
+          <span className="font-mono text-blue-200">{formatScore(entry.score)}</span>
         </li>
       ))}
     </ul>
@@ -62,8 +69,8 @@ function ScoreBreakdownDetails({ summary }) {
 
   const { breakdown } = summary;
   const formatContribution = (value, isPenalty = false) => {
-    if (!value) return '0';
-    const formatted = Math.abs(value).toLocaleString();
+    if (!value) return formatScore(0);
+    const formatted = formatScore(Math.abs(value));
     return `${isPenalty ? '−' : '+'}${formatted}`;
   };
 
@@ -114,7 +121,7 @@ function ScoreBreakdownDetails({ summary }) {
           <div>
             <p className="font-medium text-white">Time penalty</p>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-              ⌊{totalTime} × 0.5⌋
+              round({totalTime} × 0.5, 2)
             </p>
           </div>
           <span className="font-mono text-rose-300">{formatContribution(breakdown.timePenalty, true)}</span>
@@ -122,7 +129,7 @@ function ScoreBreakdownDetails({ summary }) {
       </ul>
       <div className="mt-4 flex items-baseline justify-between border-t border-white/5 pt-3">
         <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Final score</span>
-        <span className="font-mono text-lg text-blue-200">{summary.score.toLocaleString()}</span>
+        <span className="font-mono text-lg text-blue-200">{formatScore(summary.score)}</span>
       </div>
     </div>
   );
@@ -151,7 +158,7 @@ export function GauntletPlay() {
   const ActiveGameComponent = currentGame?.Component ?? null;
 
   const summary = useMemo(() => {
-    const normalizedTotalTime = Math.round(totalTime);
+    const normalizedTotalTime = Math.round(totalTime * 100) / 100;
     const breakdown = calculateScoreBreakdown({
       completed: passes,
       skips,
@@ -212,7 +219,7 @@ export function GauntletPlay() {
   }, [hasPlayedToday, existingResult, summary]);
 
   useEffect(() => {
-    if (!isComplete || !user || syncStatus === 'synced') return;
+    if (!isComplete || !user || syncStatus === 'synced' || syncStatus === 'saving') return;
     let cancelled = false;
     async function syncResult() {
       try {
@@ -441,7 +448,7 @@ export function GauntletPlay() {
                 <div className="mx-auto grid max-w-md grid-cols-2 gap-3 text-left text-sm">
                   <div className="rounded-xl border border-white/5 bg-white/5 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Score</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.score.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-white">{formatScore(displayedSummary.score)}</p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-white/5 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Time</p>
@@ -491,7 +498,7 @@ export function GauntletPlay() {
                 <div className="grid grid-cols-2 gap-3 text-left text-sm">
                   <div className="rounded-xl border border-white/5 bg-white/5 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Score</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.score.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-white">{formatScore(displayedSummary.score)}</p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-white/5 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Time</p>

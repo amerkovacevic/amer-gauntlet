@@ -13,9 +13,10 @@ export function calculateScoreBreakdown({
   const accuracyBonus = Math.max(0, safeCompleted - safeFails) * 50;
   const skipPenalty = safeSkips * 75;
   const failPenalty = safeFails * 125;
-  const timePenalty = Math.floor(safeTime * 0.5);
+  const timePenalty = Math.round(safeTime * 50) / 100;
 
-  const total = Math.max(0, completionBonus + accuracyBonus - skipPenalty - failPenalty - timePenalty);
+  const rawTotal = completionBonus + accuracyBonus - skipPenalty - failPenalty - timePenalty;
+  const total = Math.max(0, Math.round(rawTotal * 100) / 100);
 
   return {
     completionBonus,
