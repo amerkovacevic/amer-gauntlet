@@ -9,7 +9,6 @@ import {
   query,
   serverTimestamp,
   setDoc,
-  where,
 } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useGauntlet } from '../contexts/GauntletContext.jsx';
@@ -39,7 +38,14 @@ function StatusBadge({ status }) {
   );
 }
 
-function LeaderboardList({ entries }) {
+function formatDisplayDate(dateString) {
+  if (!dateString) return null;
+  const [year, month, day] = dateString.split('-');
+  if (!year || !month || !day) return dateString;
+  return `${month} ${day} ${year}`;
+}
+
+function LeaderboardList({ entries, showDate = false }) {
   if (!entries.length) {
     return (
       <p className="mt-2 rounded-xl border border-white/5 bg-slate-950/40 px-4 py-3 text-sm text-slate-400">
@@ -53,12 +59,19 @@ function LeaderboardList({ entries }) {
       {entries.map((entry, index) => (
         <li
           key={entry.id}
-          className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-white/8 bg-slate-950/60 px-4 py-3 text-sm text-slate-200 backdrop-blur"
+          className={`grid items-center gap-3 rounded-2xl border border-white/8 bg-slate-950/60 px-4 py-3 text-sm text-slate-200 backdrop-blur ${
+            showDate ? 'grid-cols-[auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto]'
+          }`}
         >
           <span className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-300">
             {(index + 1).toString().padStart(2, '0')}
           </span>
           <span className="truncate font-semibold text-white">{entry.displayName}</span>
+          {showDate ? (
+            <span className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">
+              {formatDisplayDate(entry.date)}
+            </span>
+          ) : null}
           <span className="font-mono text-blue-200">{entry.score.toLocaleString()}</span>
         </li>
       ))}
@@ -80,7 +93,6 @@ export function GauntletPlay() {
   const [syncStatus, setSyncStatus] = useState('idle');
   const [leaderboard, setLeaderboard] = useState({
     daily: [],
-    weekly: [],
     allTime: [],
   });
   const [hasPlayedToday, setHasPlayedToday] = useState(false);
@@ -255,20 +267,13 @@ export function GauntletPlay() {
   }, [countdown]);
 
   useEffect(() => {
-    setLeaderboard({ daily: [], weekly: [], allTime: [] });
+    setLeaderboard({ daily: [], allTime: [] });
     const dailyQuery = query(
       collection(db, 'dailyGauntlets', todayId, 'results'),
       orderBy('score', 'desc'),
       limit(10),
     );
-    const weekId = getWeekId(todayId);
-    const weeklyQuery = query(
-      collection(db, 'runs'),
-      where('weekId', '==', weekId),
-      orderBy('score', 'desc'),
-      limit(10),
-    );
-    const allTimeQuery = query(collection(db, 'runs'), orderBy('score', 'desc'), limit(10));
+    const allTimeQuery = query(collection(db, 'runs'), orderBy('score', 'desc'), limit(5));
 
     const unsubscribeDaily = onSnapshot(
       dailyQuery,
@@ -279,16 +284,6 @@ export function GauntletPlay() {
         }));
       },
       (error) => console.error('Failed to load daily leaderboard', error),
-    );
-    const unsubscribeWeekly = onSnapshot(
-      weeklyQuery,
-      (snapshot) => {
-        setLeaderboard((prev) => ({
-          ...prev,
-          weekly: snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
-        }));
-      },
-      (error) => console.error('Failed to load weekly leaderboard', error),
     );
     const unsubscribeAllTime = onSnapshot(
       allTimeQuery,
@@ -303,7 +298,6 @@ export function GauntletPlay() {
 
     return () => {
       unsubscribeDaily();
-      unsubscribeWeekly();
       unsubscribeAllTime();
     };
   }, [todayId]);
@@ -471,12 +465,8 @@ export function GauntletPlay() {
               <LeaderboardList entries={leaderboard.daily} />
             </div>
             <div>
-              <h4 className="text-xs uppercase tracking-[0.3em] text-blue-400">This Week</h4>
-              <LeaderboardList entries={leaderboard.weekly} />
-            </div>
-            <div>
               <h4 className="text-xs uppercase tracking-[0.3em] text-blue-400">All Time</h4>
-              <LeaderboardList entries={leaderboard.allTime} />
+              <LeaderboardList entries={leaderboard.allTime} showDate />
             </div>
           </div>
         </div>

@@ -641,4 +641,87 @@ export const miniGames = [
       answer,
     };
   }),
+  buildArithmeticInputGame('two-step-equation', 'Solve for X', 'Solve for x', (random) => {
+    const multiplier = Math.floor(random() * 7) + 2;
+    const addend = Math.floor(random() * 18) + 2;
+    const solution = Math.floor(random() * 9) + 1;
+    const result = multiplier * solution + addend;
+    return {
+      prompt: `${multiplier}x + ${addend} = ${result}. What is x?`,
+      answer: solution,
+      hint: 'Isolate x by undoing addition and division.',
+    };
+  }),
+  buildMultipleChoiceGame('fraction-compare', 'Fraction Compare', (random) => {
+    const numeratorA = Math.floor(random() * 8) + 1;
+    const denominatorA = Math.floor(random() * 8) + 2;
+    const numeratorB = Math.floor(random() * 8) + 1;
+    const denominatorB = Math.floor(random() * 8) + 2;
+    const valueA = numeratorA / denominatorA;
+    const valueB = numeratorB / denominatorB;
+    const options = [`${numeratorA}/${denominatorA}`, `${numeratorB}/${denominatorB}`];
+    const bigger = valueA > valueB ? options[0] : options[1];
+    while (options.length < 4) {
+      const n = Math.floor(random() * 8) + 1;
+      const d = Math.floor(random() * 8) + 2;
+      const candidate = `${n}/${d}`;
+      if (!options.includes(candidate)) options.push(candidate);
+    }
+    return {
+      prompt: 'Which fraction is largest?',
+      options: options.sort(() => random() - 0.5),
+      answer: bigger,
+    };
+  }),
+  buildMultipleChoiceGame('roman-reader', 'Roman Reader', (random) => {
+    const numerals = [
+      { numeral: 'XII', value: 12 },
+      { numeral: 'XIV', value: 14 },
+      { numeral: 'XVIII', value: 18 },
+      { numeral: 'XXI', value: 21 },
+      { numeral: 'XXIV', value: 24 },
+      { numeral: 'XXIX', value: 29 },
+    ];
+    const choice = numerals[Math.floor(random() * numerals.length)];
+    const distractors = [];
+    while (distractors.length < 3) {
+      const offset = Math.floor(random() * 7) - 3;
+      const candidate = choice.value + offset;
+      if (candidate > 0 && candidate !== choice.value && !distractors.includes(candidate)) {
+        distractors.push(candidate);
+      }
+    }
+    return {
+      prompt: `What is ${choice.numeral} in Arabic numerals?`,
+      options: [choice.value, ...distractors].map(String).sort(() => random() - 0.5),
+      answer: String(choice.value),
+    };
+  }),
+  buildTrueFalseGame('triangle-sum', 'Triangle Sum', (random) => {
+    const candidates = [30, 40, 50, 60, 70, 80, 90, 100, 110];
+    const angle = candidates[Math.floor(random() * candidates.length)];
+    return {
+      prompt: `A triangle can have interior angles measuring 90°, 60°, and ${angle}°.`,
+      answer: angle === 30,
+    };
+  }),
+  buildMultipleChoiceGame('mental-mix', 'Mental Mix', (random) => {
+    const start = Math.floor(random() * 30) + 10;
+    const doubled = start * 2;
+    const minus = Math.floor(random() * 10) + 3;
+    const added = Math.floor(random() * 10) + 4;
+    const answer = doubled - minus + added;
+    const prompt = `Double ${start}, subtract ${minus}, then add ${added}. What do you get?`;
+    const options = [answer];
+    while (options.length < 4) {
+      const delta = Math.floor(random() * 7) + 1;
+      const candidate = answer + (random() > 0.5 ? delta : -delta);
+      if (!options.includes(candidate) && candidate > 0) options.push(candidate);
+    }
+    return {
+      prompt,
+      options: options.map(String).sort(() => random() - 0.5),
+      answer: String(answer),
+    };
+  }),
 ];

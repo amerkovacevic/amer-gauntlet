@@ -32,7 +32,7 @@ export function Header() {
         </div>
       </div>
       <p className="max-w-3xl text-lg text-slate-200">
-        Five bite-sized mental challenges pulled from our vault of twenty mini games. Everyone sees the same gauntlet each day. Race the clock, avoid skips, and build your streak.
+        Five bite-sized mental challenges pulled from our vault of twenty-five mini games. Everyone sees the same gauntlet each day. Race the clock, avoid skips, and build your streak.
       </p>
     </header>
   );
