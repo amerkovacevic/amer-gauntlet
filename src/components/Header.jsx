@@ -27,13 +27,7 @@ export function Header() {
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => signIn()}
-              className="rounded-full border border-white/40 bg-white/90 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-900 shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-white"
-            >
-              Sign in with Google
-            </button>
+            <span className="text-sm text-slate-300">Sign in below to enter the gauntlet.</span>
           )}
         </div>
       </div>
