@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   collection,
   doc,
@@ -150,6 +150,38 @@ export function GauntletPlay() {
   const [checkingExistingRun, setCheckingExistingRun] = useState(false);
   const [countdown, setCountdown] = useState(null);
   const [isReady, setIsReady] = useState(false);
+  const [hasSyncedRun, setHasSyncedRun] = useState(false);
+
+  const userId = user?.uid ?? null;
+  const syncFlagKey = useMemo(() => {
+    if (!userId) return null;
+    return `amer-gauntlet-synced-${todayId}-${userId}`;
+  }, [todayId, userId]);
+
+  useEffect(() => {
+    if (!syncFlagKey) {
+      setHasSyncedRun(false);
+      return;
+    }
+    if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem(syncFlagKey);
+    setHasSyncedRun(stored === 'true');
+  }, [syncFlagKey]);
+
+  const markSynced = useCallback(
+    (result) => {
+      if (syncFlagKey && typeof window !== 'undefined') {
+        window.localStorage.setItem(syncFlagKey, 'true');
+      }
+      setHasSyncedRun(true);
+      setSyncStatus('synced');
+      setHasPlayedToday(true);
+      if (result) {
+        setExistingResult(result);
+      }
+    },
+    [syncFlagKey],
+  );
 
   useEffect(() => {
     setSyncStatus('idle');
@@ -220,12 +252,12 @@ export function GauntletPlay() {
   }, [hasPlayedToday, existingResult, summary]);
 
   useEffect(() => {
-    if (!isComplete || !user || syncStatus === 'synced' || syncStatus === 'saving') return;
+    if (!isComplete || !user || hasSyncedRun || syncStatus === 'synced' || syncStatus === 'saving') return;
     let cancelled = false;
     async function syncResult() {
       try {
         setSyncStatus('saving');
-        const runId = doc(collection(db, 'runs')).id;
+        const runId = `${todayId}-${user.uid}`;
         const payload = {
           uid: user.uid,
           displayName: user.displayName || 'Player',
@@ -252,9 +284,7 @@ export function GauntletPlay() {
 
         if (existingDailyData && (existingDailyData.score ?? 0) >= summary.score) {
           if (!cancelled) {
-            setSyncStatus('synced');
-            setHasPlayedToday(true);
-            setExistingResult(existingDailyData);
+            markSynced(existingDailyData);
           }
           return;
         }
@@ -264,7 +294,7 @@ export function GauntletPlay() {
         }
 
         const runsRef = doc(db, 'runs', runId);
-        await setDoc(runsRef, payload);
+        await setDoc(runsRef, payload, { merge: true });
 
         const userRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userRef);
@@ -292,9 +322,7 @@ export function GauntletPlay() {
           { merge: true },
         );
         if (!cancelled) {
-          setSyncStatus('synced');
-          setHasPlayedToday(true);
-          setExistingResult(payload);
+          markSynced(payload);
         }
       } catch (error) {
         console.error('Failed to sync result', error);
@@ -306,7 +334,7 @@ export function GauntletPlay() {
     return () => {
       cancelled = true;
     };
-  }, [isComplete, user, summary, todayId, syncStatus]);
+  }, [isComplete, user, summary, todayId, syncStatus, hasSyncedRun, markSynced]);
 
   useEffect(() => {
     let ignore = false;
