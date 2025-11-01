@@ -1,8 +1,27 @@
+const TIME_ZONE = 'America/Chicago';
+
+function getTimeZoneDateParts(date) {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
+  const parts = formatter.formatToParts(date);
+  const result = {};
+
+  for (const part of parts) {
+    if (part.type !== 'literal') {
+      result[part.type] = part.value;
+    }
+  }
+
+  return result;
+}
+
 export function getTodayId() {
-  const now = new Date();
-  const year = now.getUTCFullYear();
-  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(now.getUTCDate()).padStart(2, '0');
+  const { year, month, day } = getTimeZoneDateParts(new Date());
   return `${year}-${month}-${day}`;
 }
 
