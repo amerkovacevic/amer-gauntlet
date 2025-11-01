@@ -248,6 +248,17 @@ export function GauntletPlay() {
 
         const dailyRef = doc(db, 'dailyGauntlets', todayId, 'results', user.uid);
         const existingDaily = await getDoc(dailyRef);
+        const existingDailyData = existingDaily.exists() ? existingDaily.data() : null;
+
+        if (existingDailyData && (existingDailyData.score ?? 0) >= summary.score) {
+          if (!cancelled) {
+            setSyncStatus('synced');
+            setHasPlayedToday(true);
+            setExistingResult(existingDailyData);
+          }
+          return;
+        }
+
         if (!existingDaily.exists() || existingDaily.data().score < summary.score) {
           await setDoc(dailyRef, payload, { merge: true });
         }
