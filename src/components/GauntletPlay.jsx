@@ -347,7 +347,7 @@ export function GauntletPlay() {
       return;
     }
     setCheckingExistingRun(true);
-    const dailyRef = doc(db, 'dailyGauntlets', todayId, 'results', user.uid);
+    const dailyRef = doc(db, 'amerGauntlet_dailyGauntlets', todayId, 'results', user.uid);
     getDoc(dailyRef)
       .then((snapshot) => {
         if (ignore) return;
