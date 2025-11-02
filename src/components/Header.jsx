@@ -1,6 +1,6 @@
 export function Header() {
   return (
-    <header className="flex flex-col gap-6 rounded-3xl border border-tertiary-500/30 bg-secondary-700/5 p-8 shadow-2xl shadow-tertiary-500/5 backdrop-blur">
+    <header className="flex flex-col gap-6 rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-8 shadow-2xl shadow-tertiary-500/20">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.4em] text-tertiary-400">Daily Challenge</p>

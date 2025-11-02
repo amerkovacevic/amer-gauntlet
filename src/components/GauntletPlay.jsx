@@ -543,7 +543,7 @@ export function GauntletPlay() {
 
   return (
     <section className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-      <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/5 p-6 shadow-2xl shadow-tertiary-500/5 backdrop-blur">
+      <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-semibold text-accent-50">Today&apos;s Gauntlet</h2>
@@ -579,19 +579,19 @@ export function GauntletPlay() {
                   Your best score for today is locked in. Come back tomorrow for a fresh gauntlet.
                 </p>
                 <div className="mx-auto grid max-w-md grid-cols-2 gap-3 text-left text-sm">
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Score</p>
                     <p className="text-2xl font-bold text-accent-50">{formatScore(displayedSummary.score)}</p>
                   </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Time</p>
                     <p className="text-2xl font-bold text-accent-50">{formatDuration(displayedSummary.totalTime)}</p>
                   </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Passes</p>
                     <p className="text-2xl font-bold text-accent-50">{displayedSummary.passes}</p>
                   </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Skips / Fails</p>
                     <p className="text-2xl font-bold text-accent-50">{displayedSummary.skips} / {displayedSummary.fails}</p>
                   </div>
@@ -643,19 +643,19 @@ export function GauntletPlay() {
                     : 'Sign in to save your streak and post on the leaderboards.'}
                 </p>
                 <div className="grid grid-cols-2 gap-3 text-left text-sm">
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Score</p>
                     <p className="text-2xl font-bold text-accent-50">{formatScore(displayedSummary.score)}</p>
                   </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Time</p>
                     <p className="text-2xl font-bold text-accent-50">{formatDuration(displayedSummary.totalTime)}</p>
                   </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Passes</p>
                     <p className="text-2xl font-bold text-accent-50">{displayedSummary.passes}</p>
                   </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Skips / Fails</p>
                     <p className="text-2xl font-bold text-accent-50">{displayedSummary.skips} / {displayedSummary.fails}</p>
                   </div>
@@ -678,7 +678,7 @@ export function GauntletPlay() {
                 ? 'All challenges complete. Great work!'
                 : `Challenge ${nextChallengeNumber} of ${selection.length}`}
             </p>
-            <div className="mt-4 h-2 rounded-full bg-secondary-700/10">
+            <div className="mt-4 h-2 rounded-full bg-secondary-700/40">
               <div
                 className="h-2 rounded-full bg-tertiary-400 transition-[width]"
                 style={{ width: `${progressPercentage}%` }}
@@ -692,7 +692,7 @@ export function GauntletPlay() {
         </div>
       </div>
       <aside className="space-y-6">
-        <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/5 p-6 shadow-2xl shadow-tertiary-500/5 backdrop-blur">
+        <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
           <h3 className="text-xl font-semibold text-accent-50">Leaderboard</h3>
           <div className="mt-5 space-y-6">
             <div>
