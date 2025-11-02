@@ -21,10 +21,10 @@ function InputGame({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <header className="space-y-2 text-center">
-        <p className="text-sm uppercase tracking-[0.2em] text-slate-400">{challenge.title}</p>
-        <h2 className="text-3xl font-semibold text-white">{challenge.prompt}</h2>
+        <p className="text-sm uppercase tracking-[0.2em] text-quaternary-400">{challenge.title}</p>
+        <h2 className="text-3xl font-semibold text-accent-50">{challenge.prompt}</h2>
         {challenge.hint ? (
-          <p className="text-sm text-slate-400">{challenge.hint}</p>
+          <p className="text-sm text-quaternary-400">{challenge.hint}</p>
         ) : null}
       </header>
       <form onSubmit={handleSubmit} className="flex flex-col items-center gap-3">
@@ -33,28 +33,28 @@ function InputGame({ challenge, onPass, onFail, onSkip }) {
           autoFocus
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          className="w-full max-w-xs rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-center text-lg text-white shadow-lg shadow-slate-900/50 focus:border-blue-400 focus:outline-none"
+          className="w-full max-w-xs rounded-xl border border-tertiary-600 bg-secondary-700 px-4 py-3 text-center text-lg text-accent-50 placeholder:text-quaternary-500 shadow-lg shadow-primary-800/50 focus:border-tertiary-400 focus:outline-none focus:ring-2 focus:ring-tertiary-500/40"
         />
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            className="rounded-full bg-blue-500 px-6 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 hover:bg-blue-400"
+            className="rounded-full bg-tertiary-500 px-6 py-2 text-sm font-semibold text-accent-50 shadow-lg shadow-tertiary-500/30 transition hover:-translate-y-0.5 hover:bg-tertiary-400 active:bg-tertiary-400 touch-manipulation"
           >
             Submit
           </button>
           <button
             type="button"
             onClick={onSkip}
-            className="rounded-full border border-slate-700 px-6 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white"
+            className="rounded-full border border-tertiary-600 px-6 py-2 text-sm font-semibold text-quaternary-200 transition hover:border-tertiary-500 hover:text-accent-50 active:border-tertiary-500 active:text-accent-50 touch-manipulation"
           >
             Skip
           </button>
         </div>
         {status === 'fail' ? (
-          <p className="text-sm font-medium text-rose-400">Not quite! Try again tomorrow.</p>
+          <p className="text-sm font-medium text-warning-400">Not quite! Try again tomorrow.</p>
         ) : null}
         {status === 'pass' ? (
-          <p className="text-sm font-medium text-blue-400">Success!</p>
+          <p className="text-sm font-medium text-tertiary-400">Success!</p>
         ) : null}
       </form>
     </div>
@@ -79,8 +79,8 @@ function MultipleChoiceGame({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <header className="space-y-2 text-center">
-        <p className="text-sm uppercase tracking-[0.2em] text-slate-400">{challenge.title}</p>
-        <h2 className="text-3xl font-semibold text-white">{challenge.prompt}</h2>
+        <p className="text-sm uppercase tracking-[0.2em] text-quaternary-400">{challenge.title}</p>
+        <h2 className="text-3xl font-semibold text-accent-50">{challenge.prompt}</h2>
       </header>
       <div className="grid gap-3">
         {challenge.options.map((option) => (
@@ -88,12 +88,12 @@ function MultipleChoiceGame({ challenge, onPass, onFail, onSkip }) {
             key={option}
             type="button"
             onClick={() => submit(option)}
-            className={`rounded-xl border px-4 py-3 text-lg font-semibold shadow-lg transition hover:-translate-y-0.5 ${
+            className={`rounded-xl border px-4 py-3 text-lg font-semibold shadow-lg transition hover:-translate-y-0.5 touch-manipulation ${
               selection === option
                 ? challenge.accept(option)
-                  ? 'border-blue-500 bg-blue-500/10 text-blue-300'
-                  : 'border-rose-500 bg-rose-500/10 text-rose-300'
-                : 'border-slate-800 bg-slate-900 text-white hover:border-blue-400'
+                  ? 'border-tertiary-500 bg-tertiary-500/10 text-tertiary-300'
+                  : 'border-warning-500 bg-warning-500/10 text-warning-300'
+                : 'border-tertiary-600 bg-secondary-700 text-accent-50 hover:border-tertiary-400 active:border-tertiary-400'
             }`}
           >
             {option}
@@ -104,16 +104,16 @@ function MultipleChoiceGame({ challenge, onPass, onFail, onSkip }) {
         <button
           type="button"
           onClick={onSkip}
-          className="rounded-full border border-slate-700 px-6 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white"
+          className="rounded-full border border-tertiary-600 px-6 py-2 text-sm font-semibold text-quaternary-200 transition hover:border-tertiary-500 hover:text-accent-50 active:border-tertiary-500 active:text-accent-50 touch-manipulation"
         >
           Skip
         </button>
       </div>
       {status === 'fail' ? (
-        <p className="text-center text-sm font-medium text-rose-400">Tough luck! That wasn&apos;t it.</p>
+        <p className="text-center text-sm font-medium text-warning-400">Tough luck! That wasn&apos;t it.</p>
       ) : null}
       {status === 'pass' ? (
-        <p className="text-center text-sm font-medium text-blue-400">Nicely done.</p>
+        <p className="text-center text-sm font-medium text-tertiary-400">Nicely done.</p>
       ) : null}
     </div>
   );
@@ -147,9 +147,9 @@ function OrderButtonsGame({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <header className="space-y-2 text-center">
-        <p className="text-sm uppercase tracking-[0.2em] text-slate-400">{challenge.title}</p>
-        <h2 className="text-3xl font-semibold text-white">{challenge.prompt}</h2>
-        <p className="text-sm text-slate-400">Tap the numbers in ascending order.</p>
+        <p className="text-sm uppercase tracking-[0.2em] text-quaternary-400">{challenge.title}</p>
+        <h2 className="text-3xl font-semibold text-accent-50">{challenge.prompt}</h2>
+        <p className="text-sm text-quaternary-400">Tap the numbers in ascending order.</p>
       </header>
       <div className="flex flex-wrap justify-center gap-3">
         {available.map((value) => (
@@ -157,15 +157,15 @@ function OrderButtonsGame({ challenge, onPass, onFail, onSkip }) {
             key={value}
             type="button"
             onClick={() => handlePick(value)}
-            className="rounded-2xl border border-slate-800 bg-slate-900 px-6 py-4 text-2xl font-bold text-blue-300 shadow-lg shadow-blue-500/10 transition hover:-translate-y-0.5 hover:border-blue-500"
+            className="rounded-2xl border border-tertiary-600 bg-secondary-700 px-6 py-4 text-2xl font-bold text-tertiary-300 shadow-lg shadow-tertiary-500/10 transition hover:-translate-y-0.5 hover:border-tertiary-400 active:border-tertiary-400 touch-manipulation"
           >
             {value}
           </button>
         ))}
       </div>
-      <div className="flex justify-center gap-2 text-sm text-slate-400">
+      <div className="flex justify-center gap-2 text-sm text-quaternary-400">
         {progress.map((value) => (
-          <span key={value} className="rounded-full border border-blue-500/40 px-3 py-1 text-blue-300">
+          <span key={value} className="rounded-full border border-tertiary-500/40 px-3 py-1 text-tertiary-300">
             {value}
           </span>
         ))}
@@ -174,16 +174,16 @@ function OrderButtonsGame({ challenge, onPass, onFail, onSkip }) {
         <button
           type="button"
           onClick={onSkip}
-          className="rounded-full border border-slate-700 px-6 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white"
+          className="rounded-full border border-tertiary-600 px-6 py-2 text-sm font-semibold text-quaternary-200 transition hover:border-tertiary-500 hover:text-accent-50 active:border-tertiary-500 active:text-accent-50 touch-manipulation"
         >
           Skip
         </button>
       </div>
       {status === 'fail' ? (
-        <p className="text-center text-sm font-medium text-rose-400">Out of order! Keep practicing.</p>
+        <p className="text-center text-sm font-medium text-warning-400">Out of order! Keep practicing.</p>
       ) : null}
       {status === 'pass' ? (
-        <p className="text-center text-sm font-medium text-blue-400">Perfect order.</p>
+        <p className="text-center text-sm font-medium text-tertiary-400">Perfect order.</p>
       ) : null}
     </div>
   );
@@ -204,10 +204,10 @@ function ColorWordGame({ challenge, onPass, onFail, onSkip }) {
 
   return (
     <div className="space-y-6 text-center">
-      <p className="text-sm uppercase tracking-[0.2em] text-slate-400">{challenge.title}</p>
-      <h2 className="text-3xl font-semibold text-white">{challenge.prompt}</h2>
+      <p className="text-sm uppercase tracking-[0.2em] text-quaternary-400">{challenge.title}</p>
+      <h2 className="text-3xl font-semibold text-accent-50">{challenge.prompt}</h2>
       <div className="flex justify-center">
-        <div className="rounded-3xl border border-slate-800 bg-slate-900 px-8 py-6 shadow-xl">
+        <div className="rounded-3xl border border-tertiary-600 bg-secondary-700 px-8 py-6 shadow-xl">
           <span
             className="text-4xl font-black"
             style={{ color: challenge.displayColor }}
@@ -222,7 +222,7 @@ function ColorWordGame({ challenge, onPass, onFail, onSkip }) {
             key={option}
             type="button"
             onClick={() => choose(option)}
-            className="rounded-xl border border-slate-800 bg-slate-900 px-5 py-3 text-lg font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:border-blue-500"
+            className="rounded-xl border border-tertiary-600 bg-secondary-700 px-5 py-3 text-lg font-semibold text-accent-50 shadow-lg transition hover:-translate-y-0.5 hover:border-tertiary-400 active:border-tertiary-400 touch-manipulation"
           >
             {option}
           </button>
@@ -232,16 +232,16 @@ function ColorWordGame({ challenge, onPass, onFail, onSkip }) {
         <button
           type="button"
           onClick={onSkip}
-          className="rounded-full border border-slate-700 px-6 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white"
+          className="rounded-full border border-tertiary-600 px-6 py-2 text-sm font-semibold text-quaternary-200 transition hover:border-tertiary-500 hover:text-accent-50 active:border-tertiary-500 active:text-accent-50 touch-manipulation"
         >
           Skip
         </button>
       </div>
       {status === 'fail' ? (
-        <p className="text-center text-sm font-medium text-rose-400">Color tricked you this time.</p>
+        <p className="text-center text-sm font-medium text-warning-400">Color tricked you this time.</p>
       ) : null}
       {status === 'pass' ? (
-        <p className="text-center text-sm font-medium text-blue-400">You saw through the illusion.</p>
+        <p className="text-center text-sm font-medium text-tertiary-400">You saw through the illusion.</p>
       ) : null}
     </div>
   );
@@ -262,20 +262,20 @@ function TrueFalseGame({ challenge, onPass, onFail, onSkip }) {
 
   return (
     <div className="space-y-6 text-center">
-      <p className="text-sm uppercase tracking-[0.2em] text-slate-400">{challenge.title}</p>
-      <h2 className="text-3xl font-semibold text-white">{challenge.prompt}</h2>
+      <p className="text-sm uppercase tracking-[0.2em] text-quaternary-400">{challenge.title}</p>
+      <h2 className="text-3xl font-semibold text-accent-50">{challenge.prompt}</h2>
       <div className="flex justify-center gap-4">
         <button
           type="button"
           onClick={() => choose('True')}
-          className="rounded-full border border-blue-500/40 bg-blue-500/10 px-8 py-3 text-lg font-semibold text-blue-300 shadow-lg shadow-blue-500/20 transition hover:-translate-y-0.5 hover:border-blue-500"
+          className="rounded-full border border-tertiary-500/40 bg-tertiary-500/10 px-8 py-3 text-lg font-semibold text-tertiary-300 shadow-lg shadow-tertiary-500/20 transition hover:-translate-y-0.5 hover:border-tertiary-400 active:border-tertiary-400 touch-manipulation"
         >
           True
         </button>
         <button
           type="button"
           onClick={() => choose('False')}
-          className="rounded-full border border-rose-500/40 bg-rose-500/10 px-8 py-3 text-lg font-semibold text-rose-300 shadow-lg shadow-rose-500/20 transition hover:-translate-y-0.5 hover:border-rose-500"
+          className="rounded-full border border-warning-500/40 bg-warning-500/10 px-8 py-3 text-lg font-semibold text-warning-300 shadow-lg shadow-warning-500/20 transition hover:-translate-y-0.5 hover:border-warning-400 active:border-warning-400 touch-manipulation"
         >
           False
         </button>
@@ -284,16 +284,16 @@ function TrueFalseGame({ challenge, onPass, onFail, onSkip }) {
         <button
           type="button"
           onClick={onSkip}
-          className="rounded-full border border-slate-700 px-6 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white"
+          className="rounded-full border border-tertiary-600 px-6 py-2 text-sm font-semibold text-quaternary-200 transition hover:border-tertiary-500 hover:text-accent-50 active:border-tertiary-500 active:text-accent-50 touch-manipulation"
         >
           Skip
         </button>
       </div>
       {status === 'fail' ? (
-        <p className="text-center text-sm font-medium text-rose-400">Not quite.</p>
+        <p className="text-center text-sm font-medium text-warning-400">Not quite.</p>
       ) : null}
       {status === 'pass' ? (
-        <p className="text-center text-sm font-medium text-blue-400">Correct!</p>
+        <p className="text-center text-sm font-medium text-tertiary-400">Correct!</p>
       ) : null}
     </div>
   );

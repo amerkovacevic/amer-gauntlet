@@ -33,7 +33,7 @@ function formatDisplayDate(dateString) {
 function LeaderboardList({ entries, showDate = false }) {
   if (!entries.length) {
     return (
-      <p className="mt-2 rounded-xl border border-white/5 bg-slate-950/40 px-4 py-3 text-sm text-slate-400">
+      <p className="mt-2 rounded-xl border border-tertiary-500/30 bg-primary-800/40 px-4 py-3 text-sm text-quaternary-400">
         No runs recorded yet.
       </p>
     );
@@ -44,20 +44,20 @@ function LeaderboardList({ entries, showDate = false }) {
       {entries.map((entry, index) => (
         <li
           key={entry.id}
-          className={`grid items-center gap-3 rounded-2xl border border-white/8 bg-slate-950/60 px-4 py-3 text-sm text-slate-200 backdrop-blur ${
+          className={`grid items-center gap-3 rounded-2xl border border-tertiary-500/30 bg-primary-800/60 px-4 py-3 text-sm text-quaternary-200 backdrop-blur ${
             showDate ? 'grid-cols-[auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto]'
           }`}
         >
-          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-300">
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-tertiary-300">
             {(index + 1).toString().padStart(2, '0')}
           </span>
-          <span className="truncate font-semibold text-white">{entry.displayName}</span>
+          <span className="truncate font-semibold text-accent-50">{entry.displayName}</span>
           {showDate ? (
-            <span className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">
+            <span className="text-[0.65rem] uppercase tracking-[0.2em] text-quaternary-400">
               {formatDisplayDate(entry.date)}
             </span>
           ) : null}
-          <span className="font-mono text-blue-200">{formatScore(entry.score)}</span>
+          <span className="font-mono text-tertiary-200">{formatScore(entry.score)}</span>
         </li>
       ))}
     </ul>
@@ -78,58 +78,58 @@ function ScoreBreakdownDetails({ summary }) {
   const totalTime = summary?.totalTime ?? 0;
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-slate-950/50 p-4 text-left text-sm text-slate-200">
-      <h4 className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-300">Score breakdown</h4>
+    <div className="rounded-2xl border border-tertiary-500/30 bg-primary-800/50 p-4 text-left text-sm text-quaternary-200">
+      <h4 className="text-xs font-semibold uppercase tracking-[0.3em] text-tertiary-300">Score breakdown</h4>
       <ul className="mt-4 space-y-3">
         <li className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-medium text-white">Completion bonus</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            <p className="font-medium text-accent-50">Completion bonus</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-quaternary-400">
               {summary.passes} clears × 200
             </p>
           </div>
-          <span className="font-mono text-blue-200">{formatContribution(breakdown.completionBonus)}</span>
+          <span className="font-mono text-tertiary-200">{formatContribution(breakdown.completionBonus)}</span>
         </li>
         <li className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-medium text-white">Accuracy bonus</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            <p className="font-medium text-accent-50">Accuracy bonus</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-quaternary-400">
               max({summary.passes} − {summary.fails}, 0) × 50 → {accuracyCount}
             </p>
           </div>
-          <span className="font-mono text-blue-200">{formatContribution(breakdown.accuracyBonus)}</span>
+          <span className="font-mono text-tertiary-200">{formatContribution(breakdown.accuracyBonus)}</span>
         </li>
         <li className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-medium text-white">Skip penalty</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            <p className="font-medium text-accent-50">Skip penalty</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-quaternary-400">
               {summary.skips} skips × 75
             </p>
           </div>
-          <span className="font-mono text-rose-300">{formatContribution(breakdown.skipPenalty, true)}</span>
+          <span className="font-mono text-warning-300">{formatContribution(breakdown.skipPenalty, true)}</span>
         </li>
         <li className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-medium text-white">Fail penalty</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            <p className="font-medium text-accent-50">Fail penalty</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-quaternary-400">
               {summary.fails} fails × 125
             </p>
           </div>
-          <span className="font-mono text-rose-300">{formatContribution(breakdown.failPenalty, true)}</span>
+          <span className="font-mono text-warning-300">{formatContribution(breakdown.failPenalty, true)}</span>
         </li>
         <li className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-medium text-white">Time penalty</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            <p className="font-medium text-accent-50">Time penalty</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-quaternary-400">
               round({totalTime} × 0.5, 2)
             </p>
           </div>
-          <span className="font-mono text-rose-300">{formatContribution(breakdown.timePenalty, true)}</span>
+          <span className="font-mono text-warning-300">{formatContribution(breakdown.timePenalty, true)}</span>
         </li>
       </ul>
-      <div className="mt-4 flex items-baseline justify-between border-t border-white/5 pt-3">
-        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Final score</span>
-        <span className="font-mono text-lg text-blue-200">{formatScore(summary.score)}</span>
+      <div className="mt-4 flex items-baseline justify-between border-t border-tertiary-500/30 pt-3">
+        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-quaternary-400">Final score</span>
+        <span className="font-mono text-lg text-tertiary-200">{formatScore(summary.score)}</span>
       </div>
     </div>
   );
@@ -543,57 +543,57 @@ export function GauntletPlay() {
 
   return (
     <section className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-blue-500/5 backdrop-blur">
+      <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/5 p-6 shadow-2xl shadow-tertiary-500/5 backdrop-blur">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-3">
-            <h2 className="text-2xl font-semibold text-white">Today&apos;s Gauntlet</h2>
-            <p className="text-sm uppercase tracking-[0.3em] text-blue-400">{formattedToday}</p>
+            <h2 className="text-2xl font-semibold text-accent-50">Today&apos;s Gauntlet</h2>
+            <p className="text-sm uppercase tracking-[0.3em] text-tertiary-400">{formattedToday}</p>
           </div>
-          <div className="rounded-2xl border border-white/5 bg-slate-950/60 p-6 shadow-inner shadow-black/40">
+          <div className="rounded-2xl border border-tertiary-500/30 bg-primary-800/60 p-6 shadow-inner shadow-primary-800/40">
             {initializing ? (
-              <div className="space-y-3 text-center text-sm text-slate-300">
+              <div className="space-y-3 text-center text-sm text-quaternary-300">
                 <p>Loading your profile…</p>
               </div>
             ) : !user ? (
               <div className="space-y-4 text-center">
-                <h3 className="text-3xl font-semibold text-white">Sign in to play</h3>
-                <p className="text-sm text-slate-300">
+                <h3 className="text-3xl font-semibold text-accent-50">Sign in to play</h3>
+                <p className="text-sm text-quaternary-300">
                   You need to be signed in to attempt today&apos;s Amer Gauntlet and post a score to the leaderboards.
                 </p>
                 <button
                   type="button"
                   onClick={() => signIn()}
-                  className="rounded-full border border-white/40 bg-white/90 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-900 shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-white"
+                  className="rounded-full border border-tertiary-500/40 bg-accent-50/90 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-primary-800 shadow-lg shadow-primary-800/10 transition hover:-translate-y-0.5 hover:bg-accent-50 active:bg-accent-50 touch-manipulation"
                 >
                   Sign in with Google
                 </button>
               </div>
             ) : checkingExistingRun ? (
-              <div className="space-y-3 text-center text-sm text-slate-300">
+              <div className="space-y-3 text-center text-sm text-quaternary-300">
                 <p>Checking your progress…</p>
               </div>
             ) : hasPlayedToday && !isComplete ? (
               <div className="space-y-4 text-center">
-                <h3 className="text-3xl font-semibold text-white">You already played today</h3>
-                <p className="text-sm text-slate-300">
+                <h3 className="text-3xl font-semibold text-accent-50">You already played today</h3>
+                <p className="text-sm text-quaternary-300">
                   Your best score for today is locked in. Come back tomorrow for a fresh gauntlet.
                 </p>
                 <div className="mx-auto grid max-w-md grid-cols-2 gap-3 text-left text-sm">
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Score</p>
-                    <p className="text-2xl font-bold text-white">{formatScore(displayedSummary.score)}</p>
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Score</p>
+                    <p className="text-2xl font-bold text-accent-50">{formatScore(displayedSummary.score)}</p>
                   </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Time</p>
-                    <p className="text-2xl font-bold text-white">{formatDuration(displayedSummary.totalTime)}</p>
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Time</p>
+                    <p className="text-2xl font-bold text-accent-50">{formatDuration(displayedSummary.totalTime)}</p>
                   </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Passes</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.passes}</p>
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Passes</p>
+                    <p className="text-2xl font-bold text-accent-50">{displayedSummary.passes}</p>
                   </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Skips / Fails</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.skips} / {displayedSummary.fails}</p>
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Skips / Fails</p>
+                    <p className="text-2xl font-bold text-accent-50">{displayedSummary.skips} / {displayedSummary.fails}</p>
                   </div>
                 </div>
                 <div className="mx-auto max-w-md">
@@ -602,24 +602,24 @@ export function GauntletPlay() {
               </div>
             ) : showReadyPrompt ? (
               <div className="space-y-4 text-center">
-                <h3 className="text-3xl font-semibold text-white">Ready when you are</h3>
-                <p className="text-sm text-slate-300">
+                <h3 className="text-3xl font-semibold text-accent-50">Ready when you are</h3>
+                <p className="text-sm text-quaternary-300">
                   Press ready to start the countdown for today&apos;s gauntlet.
                 </p>
                 <button
                   type="button"
                   onClick={() => setIsReady(true)}
-                  className="rounded-full border border-white/40 bg-blue-400/90 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-slate-900 shadow-lg shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-400"
+                  className="rounded-full border border-tertiary-500/40 bg-tertiary-400/90 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-primary-800 shadow-lg shadow-tertiary-500/20 transition hover:-translate-y-0.5 hover:bg-tertiary-400 active:bg-tertiary-400 touch-manipulation"
                 >
                   I&apos;m ready
                 </button>
               </div>
             ) : !isComplete && (countdownActive || countdown === null) ? (
-              <div className="space-y-3 text-center text-sm text-slate-300">
+              <div className="space-y-3 text-center text-sm text-quaternary-300">
                 {countdownActive ? (
                   <>
-                    <p className="text-3xl font-semibold text-white">Get ready…</p>
-                    <p className="text-6xl font-black text-blue-300">{countdown}</p>
+                    <p className="text-3xl font-semibold text-accent-50">Get ready…</p>
+                    <p className="text-6xl font-black text-tertiary-300">{countdown}</p>
                     <p>Focus up! The gauntlet begins when the counter hits zero.</p>
                   </>
                 ) : (
@@ -636,55 +636,55 @@ export function GauntletPlay() {
               />
             ) : (
               <div className="space-y-4 text-center">
-                <h3 className="text-3xl font-semibold text-white">Gauntlet complete</h3>
-                <p className="text-sm text-slate-300">
+                <h3 className="text-3xl font-semibold text-accent-50">Gauntlet complete</h3>
+                <p className="text-sm text-quaternary-300">
                   {user
                     ? 'Your score has been locked in. Come back tomorrow for the next Amer Gauntlet.'
                     : 'Sign in to save your streak and post on the leaderboards.'}
                 </p>
                 <div className="grid grid-cols-2 gap-3 text-left text-sm">
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Score</p>
-                    <p className="text-2xl font-bold text-white">{formatScore(displayedSummary.score)}</p>
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Score</p>
+                    <p className="text-2xl font-bold text-accent-50">{formatScore(displayedSummary.score)}</p>
                   </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Time</p>
-                    <p className="text-2xl font-bold text-white">{formatDuration(displayedSummary.totalTime)}</p>
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Time</p>
+                    <p className="text-2xl font-bold text-accent-50">{formatDuration(displayedSummary.totalTime)}</p>
                   </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Passes</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.passes}</p>
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Passes</p>
+                    <p className="text-2xl font-bold text-accent-50">{displayedSummary.passes}</p>
                   </div>
-                  <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Skips / Fails</p>
-                    <p className="text-2xl font-bold text-white">{displayedSummary.skips} / {displayedSummary.fails}</p>
+                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Skips / Fails</p>
+                    <p className="text-2xl font-bold text-accent-50">{displayedSummary.skips} / {displayedSummary.fails}</p>
                   </div>
                 </div>
                 <div className="mx-auto max-w-lg">
                   <ScoreBreakdownDetails summary={displayedSummary} />
                 </div>
                 {syncStatus === 'saving' ? (
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Posting to leaderboards…</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-quaternary-400">Posting to leaderboards…</p>
                 ) : syncStatus === 'error' ? (
-                  <p className="text-xs uppercase tracking-[0.3em] text-rose-400">Failed to sync score. Try refreshing.</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-warning-400">Failed to sync score. Try refreshing.</p>
                 ) : null}
               </div>
             )}
           </div>
-          <div className="rounded-2xl border border-white/5 bg-slate-950/60 p-6 shadow-inner shadow-black/40">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-400">Progress</p>
-            <p className="mt-2 text-sm text-slate-300">
+          <div className="rounded-2xl border border-tertiary-500/30 bg-primary-800/60 p-6 shadow-inner shadow-primary-800/40">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-tertiary-400">Progress</p>
+            <p className="mt-2 text-sm text-quaternary-300">
               {isComplete
                 ? 'All challenges complete. Great work!'
                 : `Challenge ${nextChallengeNumber} of ${selection.length}`}
             </p>
-            <div className="mt-4 h-2 rounded-full bg-white/10">
+            <div className="mt-4 h-2 rounded-full bg-secondary-700/10">
               <div
-                className="h-2 rounded-full bg-blue-400 transition-[width]"
+                className="h-2 rounded-full bg-tertiary-400 transition-[width]"
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+            <div className="mt-3 flex items-center justify-between text-xs text-quaternary-400">
               <span>Completed</span>
               <span>{completedCount} / {selection.length}</span>
             </div>
@@ -692,15 +692,15 @@ export function GauntletPlay() {
         </div>
       </div>
       <aside className="space-y-6">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-blue-500/5 backdrop-blur">
-          <h3 className="text-xl font-semibold text-white">Leaderboard</h3>
+        <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/5 p-6 shadow-2xl shadow-tertiary-500/5 backdrop-blur">
+          <h3 className="text-xl font-semibold text-accent-50">Leaderboard</h3>
           <div className="mt-5 space-y-6">
             <div>
-              <h4 className="text-xs uppercase tracking-[0.3em] text-blue-400">Daily</h4>
+              <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Daily</h4>
               <LeaderboardList entries={leaderboard.daily} />
             </div>
             <div>
-              <h4 className="text-xs uppercase tracking-[0.3em] text-blue-400">All Time</h4>
+              <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400">All Time</h4>
               <LeaderboardList entries={leaderboard.allTime} showDate />
             </div>
           </div>
