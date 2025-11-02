@@ -252,7 +252,13 @@ export function GauntletPlay() {
   }, [hasPlayedToday, existingResult, summary]);
 
   useEffect(() => {
-    if (!isComplete || !user || hasSyncedRun || syncStatus === 'synced' || syncStatus === 'saving') return;
+    // Don't sync if:
+    // - Not complete
+    // - No user
+    // - Already synced (localStorage flag)
+    // - Already played today (checked from Firestore)
+    // - Currently syncing or already synced
+    if (!isComplete || !user || hasSyncedRun || hasPlayedToday || syncStatus === 'synced' || syncStatus === 'saving') return;
     let cancelled = false;
     async function syncResult() {
       try {
@@ -282,6 +288,7 @@ export function GauntletPlay() {
         const existingDaily = await getDoc(dailyRef);
         const existingDailyData = existingDaily.exists() ? existingDaily.data() : null;
 
+        // If existing score is same or better, don't update anything
         if (existingDailyData && (existingDailyData.score ?? 0) >= summary.score) {
           if (!cancelled) {
             markSynced(existingDailyData);
@@ -289,12 +296,16 @@ export function GauntletPlay() {
           return;
         }
 
-        if (!existingDaily.exists() || existingDaily.data().score < summary.score) {
+        // Only update if new score is better (or no existing result)
+        const shouldUpdate = !existingDaily.exists() || (existingDaily.data().score ?? 0) < summary.score;
+        
+        if (shouldUpdate) {
           await setDoc(dailyRef, payload, { merge: true });
+          
+          // Only update runs collection if we're actually updating the daily result
+          const runsRef = doc(db, 'amerGauntlet_runs', runId);
+          await setDoc(runsRef, payload, { merge: true });
         }
-
-        const runsRef = doc(db, 'amerGauntlet_runs', runId);
-        await setDoc(runsRef, payload, { merge: true });
 
         const userRef = doc(db, 'amerGauntlet_users', user.uid);
         const userSnap = await getDoc(userRef);
@@ -334,7 +345,7 @@ export function GauntletPlay() {
     return () => {
       cancelled = true;
     };
-  }, [isComplete, user, summary, todayId, syncStatus, hasSyncedRun, markSynced]);
+  }, [isComplete, user, summary, todayId, syncStatus, hasSyncedRun, hasPlayedToday, markSynced]);
 
   useEffect(() => {
     let ignore = false;

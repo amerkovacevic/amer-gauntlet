@@ -108,11 +108,24 @@ export function GauntletProvider({ children }) {
     const passes = state.statuses.filter((item) => item.status === STATUS_PASSED).length;
     const skips = state.statuses.filter((item) => item.status === STATUS_SKIPPED).length;
     const fails = state.statuses.filter((item) => item.status === STATUS_FAILED).length;
-    const totalTime = state.finishedAt && state.startedAt
-      ? (state.finishedAt - state.startedAt) / 1000
-      : state.startedAt
-        ? (Date.now() - state.startedAt) / 1000
-        : 0;
+    // Calculate total time, with safety checks to prevent negative or unrealistic values
+    let totalTime = 0;
+    if (state.finishedAt && state.startedAt) {
+      // If both timestamps exist, use the difference (most accurate)
+      totalTime = Math.max(0, (state.finishedAt - state.startedAt) / 1000);
+      // Safety check: if time is more than 24 hours, something is wrong (stale state)
+      // Reset to 0 to prevent incorrect scoring
+      if (totalTime > 86400) {
+        totalTime = 0;
+      }
+    } else if (state.startedAt) {
+      // If only startedAt exists (game in progress), calculate elapsed time
+      totalTime = Math.max(0, (Date.now() - state.startedAt) / 1000);
+      // Safety check: if elapsed time is more than 24 hours, reset to 0
+      if (totalTime > 86400) {
+        totalTime = 0;
+      }
+    }
 
     return {
       todayId,
