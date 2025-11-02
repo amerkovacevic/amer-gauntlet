@@ -191,6 +191,27 @@ export function GauntletPlay() {
   const ActiveGameComponent = currentGame?.Component ?? null;
 
   const summary = useMemo(() => {
+    // If user has already played today, don't recalculate from potentially stale state
+    // The displayedSummary will use existingResult instead
+    if (hasPlayedToday && existingResult) {
+      return {
+        score: existingResult.score ?? 0,
+        passes: existingResult.passes ?? 0,
+        skips: existingResult.skips ?? 0,
+        fails: existingResult.fails ?? 0,
+        totalTime: existingResult.totalTime ?? 0,
+        breakdown: existingResult.breakdown ?? {
+          completionBonus: 0,
+          accuracyBonus: 0,
+          skipPenalty: 0,
+          failPenalty: 0,
+          timePenalty: 0,
+          total: 0,
+        },
+      };
+    }
+    
+    // Otherwise, calculate from current state
     const normalizedTotalTime = Math.round(totalTime * 100) / 100;
     const breakdown = calculateScoreBreakdown({
       completed: passes,
@@ -206,7 +227,7 @@ export function GauntletPlay() {
       totalTime: normalizedTotalTime,
       breakdown,
     };
-  }, [passes, skips, fails, totalTime]);
+  }, [passes, skips, fails, totalTime, hasPlayedToday, existingResult]);
 
   const formattedToday = useMemo(() => {
     const [year, month, day] = todayId.split('-');
@@ -255,13 +276,47 @@ export function GauntletPlay() {
     // Don't sync if:
     // - Not complete
     // - No user
+    // - Still checking if user has already played (prevent race condition)
     // - Already synced (localStorage flag)
     // - Already played today (checked from Firestore)
     // - Currently syncing or already synced
-    if (!isComplete || !user || hasSyncedRun || hasPlayedToday || syncStatus === 'synced' || syncStatus === 'saving') return;
+    // - Suspicious: totalTime is 0 when complete (indicates stale state)
+    if (!isComplete || !user || checkingExistingRun || hasSyncedRun || hasPlayedToday || syncStatus === 'synced' || syncStatus === 'saving') return;
+    
+    // Additional validation: if totalTime is 0 and game is complete, this is suspicious (stale state)
+    // Only allow 0 time if it's a legitimate instant completion (very unlikely)
+    // For safety, if time is 0 and we're trying to sync, wait for hasPlayedToday check
+    if (summary.totalTime === 0 && isComplete && checkingExistingRun === false) {
+      // This is suspicious - likely stale state. Don't sync until we confirm
+      return;
+    }
+    
     let cancelled = false;
     async function syncResult() {
       try {
+        // Double-check with Firestore before syncing
+        const dailyRef = doc(db, 'amerGauntlet_dailyGauntlets', todayId, 'results', user.uid);
+        const existingDaily = await getDoc(dailyRef);
+        const existingDailyData = existingDaily.exists() ? existingDaily.data() : null;
+
+        // If user already has a result, don't sync with potentially stale data
+        if (existingDailyData) {
+          if (!cancelled) {
+            markSynced(existingDailyData);
+          }
+          return;
+        }
+
+        // If totalTime is 0 and we're trying to sync, this is suspicious
+        // It likely means stale state where timestamps were invalid
+        if (summary.totalTime === 0 && isComplete) {
+          console.warn('Suspicious sync attempt with 0 time - likely stale state. Aborting.');
+          if (!cancelled) {
+            setSyncStatus('error');
+          }
+          return;
+        }
+
         setSyncStatus('saving');
         const runId = `${todayId}-${user.uid}`;
         const payload = {
@@ -284,28 +339,11 @@ export function GauntletPlay() {
           completedAt: serverTimestamp(),
         };
 
-        const dailyRef = doc(db, 'amerGauntlet_dailyGauntlets', todayId, 'results', user.uid);
-        const existingDaily = await getDoc(dailyRef);
-        const existingDailyData = existingDaily.exists() ? existingDaily.data() : null;
-
-        // If existing score is same or better, don't update anything
-        if (existingDailyData && (existingDailyData.score ?? 0) >= summary.score) {
-          if (!cancelled) {
-            markSynced(existingDailyData);
-          }
-          return;
-        }
-
-        // Only update if new score is better (or no existing result)
-        const shouldUpdate = !existingDaily.exists() || (existingDaily.data().score ?? 0) < summary.score;
+        await setDoc(dailyRef, payload, { merge: true });
         
-        if (shouldUpdate) {
-          await setDoc(dailyRef, payload, { merge: true });
-          
-          // Only update runs collection if we're actually updating the daily result
-          const runsRef = doc(db, 'amerGauntlet_runs', runId);
-          await setDoc(runsRef, payload, { merge: true });
-        }
+        // Only update runs collection if we're actually updating the daily result
+        const runsRef = doc(db, 'amerGauntlet_runs', runId);
+        await setDoc(runsRef, payload, { merge: true });
 
         const userRef = doc(db, 'amerGauntlet_users', user.uid);
         const userSnap = await getDoc(userRef);
@@ -345,7 +383,7 @@ export function GauntletPlay() {
     return () => {
       cancelled = true;
     };
-  }, [isComplete, user, summary, todayId, syncStatus, hasSyncedRun, hasPlayedToday, markSynced]);
+  }, [isComplete, user, summary, todayId, syncStatus, hasSyncedRun, hasPlayedToday, checkingExistingRun, markSynced]);
 
   useEffect(() => {
     let ignore = false;
@@ -363,8 +401,34 @@ export function GauntletPlay() {
       .then((snapshot) => {
         if (ignore) return;
         if (snapshot.exists()) {
+          const existingData = snapshot.data();
           setHasPlayedToday(true);
-          setExistingResult(snapshot.data());
+          setExistingResult(existingData);
+          // Immediately mark as synced to prevent re-syncing with stale state
+          if (syncFlagKey && typeof window !== 'undefined') {
+            window.localStorage.setItem(syncFlagKey, 'true');
+          }
+          setHasSyncedRun(true);
+          setSyncStatus('synced');
+          
+          // Clear stale localStorage state that might have finishedAt set
+          // This prevents stale state from affecting calculations
+          const stateStorageKey = `amer-gauntlet-state-${todayId}`;
+          if (typeof window !== 'undefined') {
+            const staleState = window.localStorage.getItem(stateStorageKey);
+            if (staleState) {
+              try {
+                const parsed = JSON.parse(staleState);
+                // If state has finishedAt but we already have a result, clear it
+                // This prevents stale state from being used for calculations
+                if (parsed.finishedAt) {
+                  window.localStorage.removeItem(stateStorageKey);
+                }
+              } catch (e) {
+                // Ignore parse errors
+              }
+            }
+          }
         } else {
           setHasPlayedToday(false);
           setExistingResult(null);
@@ -382,7 +446,7 @@ export function GauntletPlay() {
     return () => {
       ignore = true;
     };
-  }, [user, todayId]);
+  }, [user, todayId, syncFlagKey]);
 
   useEffect(() => {
     if (!user || hasPlayedToday || initializing || checkingExistingRun || isComplete) {
