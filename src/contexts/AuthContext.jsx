@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const userDoc = doc(db, 'users', firebaseUser.uid);
+        const userDoc = doc(db, 'amerGauntlet_users', firebaseUser.uid);
         const snapshot = await getDoc(userDoc);
         if (!snapshot.exists()) {
           await setDoc(userDoc, {

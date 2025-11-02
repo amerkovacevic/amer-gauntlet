@@ -278,7 +278,7 @@ export function GauntletPlay() {
           completedAt: serverTimestamp(),
         };
 
-        const dailyRef = doc(db, 'dailyGauntlets', todayId, 'results', user.uid);
+        const dailyRef = doc(db, 'amerGauntlet_dailyGauntlets', todayId, 'results', user.uid);
         const existingDaily = await getDoc(dailyRef);
         const existingDailyData = existingDaily.exists() ? existingDaily.data() : null;
 
@@ -293,10 +293,10 @@ export function GauntletPlay() {
           await setDoc(dailyRef, payload, { merge: true });
         }
 
-        const runsRef = doc(db, 'runs', runId);
+        const runsRef = doc(db, 'amerGauntlet_runs', runId);
         await setDoc(runsRef, payload, { merge: true });
 
-        const userRef = doc(db, 'users', user.uid);
+        const userRef = doc(db, 'amerGauntlet_users', user.uid);
         const userSnap = await getDoc(userRef);
         const yesterday = getYesterdayId(todayId);
         let streak = 1;
@@ -410,11 +410,11 @@ export function GauntletPlay() {
   useEffect(() => {
     setLeaderboard({ daily: [], allTime: [] });
     const dailyQuery = query(
-      collection(db, 'dailyGauntlets', todayId, 'results'),
+      collection(db, 'amerGauntlet_dailyGauntlets', todayId, 'results'),
       orderBy('score', 'desc'),
       limit(10),
     );
-    const allTimeQuery = query(collection(db, 'runs'), orderBy('score', 'desc'), limit(5));
+    const allTimeQuery = query(collection(db, 'amerGauntlet_runs'), orderBy('score', 'desc'), limit(5));
 
     const unsubscribeDaily = onSnapshot(
       dailyQuery,

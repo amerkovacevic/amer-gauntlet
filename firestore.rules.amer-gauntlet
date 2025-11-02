@@ -1,22 +1,28 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Amer Gauntlet app - scoped to amerGauntlet_* collections only
+    // This ensures these rules don't affect other apps in the same Firebase project
+    
     function isSignedIn() {
       return request.auth != null;
     }
 
-    match /users/{userId} {
+    // Amer Gauntlet users collection
+    match /amerGauntlet_users/{userId} {
       allow read, create, update: if isSignedIn() && request.auth.uid == userId;
       allow delete: if false;
     }
 
-    match /runs/{runId} {
+    // Amer Gauntlet runs collection
+    match /amerGauntlet_runs/{runId} {
       allow read: if true;
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
       allow update, delete: if false;
     }
 
-    match /dailyGauntlets/{date} {
+    // Amer Gauntlet daily gauntlets collection
+    match /amerGauntlet_dailyGauntlets/{date} {
       allow read: if true;
       match /results/{userId} {
         allow read: if true;
@@ -28,3 +34,4 @@ service cloud.firestore {
     }
   }
 }
+
