@@ -17,13 +17,13 @@ export default function App() {
   return (
     <AuthProvider>
       <GauntletProvider>
-        <div className="relative min-h-screen bg-primary-800 text-accent-50">
+        <div className="relative flex min-h-screen flex-col bg-primary-800 text-accent-50">
           <Background />
-          <main className="relative z-10 mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12">
+          <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 flex-1">
             <Header />
             <GauntletPlay />
           </main>
-          <footer className="w-full border-t border-tertiary-500/30 bg-primary-800/80 py-4 text-center text-xs text-quaternary-500">
+          <footer className="relative z-10 w-full border-t border-tertiary-500/30 bg-primary-800/80 py-4 text-center text-xs text-quaternary-500">
             <p>&copy; {new Date().getFullYear()} Amer Kovacevic All rights reserved.</p>
           </footer>
         </div>
