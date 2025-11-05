@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { miniGames } from '../miniGames/index.jsx';
+import { games } from '../games/index.js';
 import { getTodayId } from '../utils/date.js';
 import { createSeededRandom, pickFromArray } from '../utils/random.js';
 
@@ -27,10 +27,13 @@ function createInitialState(gameCount) {
 
 export function GauntletProvider({ children }) {
   const todayId = getTodayId();
+  
+  // Select 5 random games for today using seeded random (same games every day)
   const selection = useMemo(() => {
     const seeded = createSeededRandom(`gauntlet-${todayId}`);
-    const picks = pickFromArray(seeded, miniGames, 5);
-    return picks.map((game, index) => ({
+    const picked = pickFromArray(seeded, games, 5);
+    
+    return picked.map((game, index) => ({
       id: game.id,
       name: game.name,
       Component: game.Component,
@@ -41,6 +44,7 @@ export function GauntletProvider({ children }) {
   const [state, setState] = useState(() => createInitialState(selection.length));
   const storageKey = `amer-gauntlet-state-${todayId}`;
 
+  // Load state from localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const cached = window.localStorage.getItem(storageKey);
@@ -58,26 +62,45 @@ export function GauntletProvider({ children }) {
     setState(createInitialState(selection.length));
   }, [selection.length, storageKey]);
 
+  // Save state to localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(storageKey, JSON.stringify(state));
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(state));
+    } catch (error) {
+      console.warn('Failed to save gauntlet state', error);
+    }
   }, [state, storageKey]);
 
-  useEffect(() => {
-    if (!state.startedAt) {
-      setState((prev) => ({
-        ...prev,
-        startedAt: Date.now(),
-        currentGameStartedAt: Date.now(),
-      }));
-    }
-  }, [state.startedAt]);
+  const currentGame = useMemo(() => {
+    if (state.currentIndex >= selection.length) return null;
+    return selection[state.currentIndex];
+  }, [selection, state.currentIndex]);
+
+  const isComplete = useMemo(() => {
+    return state.statuses.every(
+      (status) =>
+        status.status === STATUS_PASSED ||
+        status.status === STATUS_FAILED ||
+        status.status === STATUS_SKIPPED
+    );
+  }, [state.statuses]);
+
+  const totals = useMemo(() => {
+    const passes = state.statuses.filter((s) => s.status === STATUS_PASSED).length;
+    const skips = state.statuses.filter((s) => s.status === STATUS_SKIPPED).length;
+    const fails = state.statuses.filter((s) => s.status === STATUS_FAILED).length;
+    const totalTime = state.statuses.reduce((sum, s) => sum + (s.timeSpent || 0), 0);
+    
+    return { passes, skips, fails, totalTime };
+  }, [state.statuses]);
 
   const handleOutcome = (index, outcome) => {
     setState((prev) => {
       if (index >= prev.statuses.length) return prev;
       const entry = prev.statuses[index];
       if (entry.status !== STATUS_ACTIVE) return prev;
+      
       const now = Date.now();
       const timeSpent = prev.currentGameStartedAt ? (now - prev.currentGameStartedAt) / 1000 : 0;
       const statuses = [...prev.statuses];
@@ -86,6 +109,7 @@ export function GauntletProvider({ children }) {
         status: outcome,
         timeSpent,
       };
+
       const nextIndex = index + 1;
       if (nextIndex < statuses.length) {
         statuses[nextIndex] = {
@@ -94,6 +118,7 @@ export function GauntletProvider({ children }) {
           timeSpent: 0,
         };
       }
+
       return {
         ...prev,
         statuses,
@@ -104,62 +129,37 @@ export function GauntletProvider({ children }) {
     });
   };
 
-  const value = useMemo(() => {
-    const passes = state.statuses.filter((item) => item.status === STATUS_PASSED).length;
-    const skips = state.statuses.filter((item) => item.status === STATUS_SKIPPED).length;
-    const fails = state.statuses.filter((item) => item.status === STATUS_FAILED).length;
-    // Calculate total time, with safety checks to prevent negative or unrealistic values
-    let totalTime = 0;
-    if (state.finishedAt && state.startedAt) {
-      // If both timestamps exist, use the difference (most accurate)
-      totalTime = Math.max(0, (state.finishedAt - state.startedAt) / 1000);
-      // Safety check: if time is more than 24 hours, something is wrong (stale state)
-      // Reset to 0 to prevent incorrect scoring
-      if (totalTime > 86400) {
-        totalTime = 0;
-      }
-    } else if (state.startedAt) {
-      // If only startedAt exists (game in progress), calculate elapsed time
-      totalTime = Math.max(0, (Date.now() - state.startedAt) / 1000);
-      // Safety check: if elapsed time is more than 24 hours, reset to 0
-      if (totalTime > 86400) {
-        totalTime = 0;
-      }
-    }
+  const startGame = () => {
+    setState((prev) => ({
+      ...prev,
+      startedAt: Date.now(),
+      currentGameStartedAt: Date.now(),
+    }));
+  };
 
-    return {
+  const value = useMemo(
+    () => ({
       todayId,
       selection,
       state,
-      totals: {
-        passes,
-        skips,
-        fails,
-        totalTime,
-      },
-      isComplete: state.finishedAt !== null,
-      currentGame: selection[state.currentIndex] || null,
-      begin: () => {
-        setState((prev) => {
-          if (prev.startedAt) return prev;
-          const now = Date.now();
-          return {
-            ...prev,
-            startedAt: now,
-            currentGameStartedAt: now,
-          };
-        });
-      },
+      currentGame,
+      isComplete,
+      totals,
       recordPass: (index) => handleOutcome(index, STATUS_PASSED),
       recordFail: (index) => handleOutcome(index, STATUS_FAILED),
       recordSkip: (index) => handleOutcome(index, STATUS_SKIPPED),
-      reset: () => setState(createInitialState(selection.length)),
-    };
-  }, [selection, state, todayId]);
+      startGame,
+    }),
+    [todayId, selection, state, currentGame, isComplete, totals]
+  );
 
   return <GauntletContext.Provider value={value}>{children}</GauntletContext.Provider>;
 }
 
 export function useGauntlet() {
-  return useContext(GauntletContext);
+  const context = useContext(GauntletContext);
+  if (!context) {
+    throw new Error('useGauntlet must be used within GauntletProvider');
+  }
+  return context;
 }

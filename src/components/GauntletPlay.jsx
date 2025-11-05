@@ -1,41 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { useGauntlet } from '../contexts/GauntletContext.jsx';
+import { calculateScore, formatScore } from '../utils/scoring.js';
+import { formatDate } from '../utils/date.js';
 import {
   collection,
   doc,
   getDoc,
-  limit,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
 } from 'firebase/firestore';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { useGauntlet } from '../contexts/GauntletContext.jsx';
 import { db } from '../lib/firebase.js';
-import { calculateScoreBreakdown, formatDuration } from '../utils/scoring.js';
-import { getWeekId, getYesterdayId } from '../utils/date.js';
-
-const SCORE_FORMAT_OPTIONS = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
-
-function formatScore(value) {
-  const safeValue = Number.isFinite(value) ? value : 0;
-  return safeValue.toLocaleString(undefined, SCORE_FORMAT_OPTIONS);
-}
-
-function formatDisplayDate(dateString) {
-  if (!dateString) return null;
-  const [year, month, day] = dateString.split('-');
-  if (!year || !month || !day) return dateString;
-  return `${month} ${day} ${year}`;
-}
 
 function LeaderboardList({ entries, showDate = false }) {
-  if (!entries.length) {
+  if (entries.length === 0) {
     return (
-      <p className="mt-2 rounded-xl border border-tertiary-500/30 bg-primary-800/40 px-4 py-3 text-sm text-quaternary-400">
-        No runs recorded yet.
-      </p>
+      <p className="mt-2 text-sm text-quaternary-400">No entries yet.</p>
     );
   }
 
@@ -44,19 +27,17 @@ function LeaderboardList({ entries, showDate = false }) {
       {entries.map((entry, index) => (
         <li
           key={entry.id}
-          className={`grid items-center gap-3 rounded-2xl border border-tertiary-500/30 bg-primary-800/60 px-4 py-3 text-sm text-quaternary-200 backdrop-blur ${
-            showDate ? 'grid-cols-[auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto]'
-          }`}
+          className="flex items-center justify-between rounded-xl border border-tertiary-500/30 bg-primary-800/60 px-4 py-2 text-sm"
         >
-          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-tertiary-300">
-            {(index + 1).toString().padStart(2, '0')}
-          </span>
-          <span className="truncate font-semibold text-accent-50">{entry.displayName}</span>
-          {showDate ? (
-            <span className="text-[0.65rem] uppercase tracking-[0.2em] text-quaternary-400">
-              {formatDisplayDate(entry.date)}
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-tertiary-300">
+              #{index + 1}
             </span>
-          ) : null}
+            <span className="font-semibold text-accent-50">{entry.displayName}</span>
+            {showDate && (
+              <span className="text-xs text-quaternary-400">{entry.date}</span>
+            )}
+          </div>
           <span className="font-mono text-tertiary-200">{formatScore(entry.score)}</span>
         </li>
       ))}
@@ -64,648 +45,278 @@ function LeaderboardList({ entries, showDate = false }) {
   );
 }
 
-function ScoreBreakdownDetails({ summary }) {
-  if (!summary?.breakdown) return null;
-
-  const { breakdown } = summary;
-  const formatContribution = (value, isPenalty = false) => {
-    if (!value) return formatScore(0);
-    const formatted = formatScore(Math.abs(value));
-    return `${isPenalty ? '−' : '+'}${formatted}`;
-  };
-
-  const accuracyCount = Math.max(0, (summary?.passes ?? 0) - (summary?.fails ?? 0));
-  const totalTime = summary?.totalTime ?? 0;
-
-  return (
-    <div className="rounded-2xl border border-tertiary-500/30 bg-primary-800/50 p-4 text-left text-sm text-quaternary-200">
-      <h4 className="text-xs font-semibold uppercase tracking-[0.3em] text-tertiary-300">Score breakdown</h4>
-      <ul className="mt-4 space-y-3">
-        <li className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-medium text-accent-50">Completion bonus</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-quaternary-400">
-              {summary.passes} clears × 200
-            </p>
-          </div>
-          <span className="font-mono text-tertiary-200">{formatContribution(breakdown.completionBonus)}</span>
-        </li>
-        <li className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-medium text-accent-50">Accuracy bonus</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-quaternary-400">
-              max({summary.passes} − {summary.fails}, 0) × 50 → {accuracyCount}
-            </p>
-          </div>
-          <span className="font-mono text-tertiary-200">{formatContribution(breakdown.accuracyBonus)}</span>
-        </li>
-        <li className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-medium text-accent-50">Skip penalty</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-quaternary-400">
-              {summary.skips} skips × 75
-            </p>
-          </div>
-          <span className="font-mono text-warning-300">{formatContribution(breakdown.skipPenalty, true)}</span>
-        </li>
-        <li className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-medium text-accent-50">Fail penalty</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-quaternary-400">
-              {summary.fails} fails × 125
-            </p>
-          </div>
-          <span className="font-mono text-warning-300">{formatContribution(breakdown.failPenalty, true)}</span>
-        </li>
-        <li className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-medium text-accent-50">Time penalty</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-quaternary-400">
-              round({totalTime} × 0.5, 2)
-            </p>
-          </div>
-          <span className="font-mono text-warning-300">{formatContribution(breakdown.timePenalty, true)}</span>
-        </li>
-      </ul>
-      <div className="mt-4 flex items-baseline justify-between border-t border-tertiary-500/30 pt-3">
-        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-quaternary-400">Final score</span>
-        <span className="font-mono text-lg text-tertiary-200">{formatScore(summary.score)}</span>
-      </div>
-    </div>
-  );
-}
-
 export function GauntletPlay() {
   const { user, signIn, initializing } = useAuth();
   const gauntlet = useGauntlet();
-  const { todayId, selection, state, totals, isComplete } = gauntlet;
+  const { todayId, selection, state, currentGame, isComplete, totals, recordPass, recordFail, recordSkip, startGame } = gauntlet;
   const { passes, skips, fails, totalTime } = totals;
-  const [syncStatus, setSyncStatus] = useState('idle');
-  const [leaderboard, setLeaderboard] = useState({
-    daily: [],
-    allTime: [],
-  });
+  const [leaderboard, setLeaderboard] = useState({ daily: [], allTime: [] });
   const [hasPlayedToday, setHasPlayedToday] = useState(false);
-  const [existingResult, setExistingResult] = useState(null);
-  const [checkingExistingRun, setCheckingExistingRun] = useState(false);
-  const [countdown, setCountdown] = useState(null);
-  const [isReady, setIsReady] = useState(false);
-  const [hasSyncedRun, setHasSyncedRun] = useState(false);
 
-  const userId = user?.uid ?? null;
-  const syncFlagKey = useMemo(() => {
-    if (!userId) return null;
-    return `amer-gauntlet-synced-${todayId}-${userId}`;
-  }, [todayId, userId]);
-
+  // Check if user has already played today
   useEffect(() => {
-    if (!syncFlagKey) {
-      setHasSyncedRun(false);
-      return;
-    }
-    if (typeof window === 'undefined') return;
-    const stored = window.localStorage.getItem(syncFlagKey);
-    setHasSyncedRun(stored === 'true');
-  }, [syncFlagKey]);
-
-  const markSynced = useCallback(
-    (result) => {
-      if (syncFlagKey && typeof window !== 'undefined') {
-        window.localStorage.setItem(syncFlagKey, 'true');
-      }
-      setHasSyncedRun(true);
-      setSyncStatus('synced');
-      setHasPlayedToday(true);
-      if (result) {
-        setExistingResult(result);
-      }
-    },
-    [syncFlagKey],
-  );
-
-  useEffect(() => {
-    setSyncStatus('idle');
-  }, [todayId]);
-
-  const currentGame = gauntlet.currentGame;
-  const ActiveGameComponent = currentGame?.Component ?? null;
-
-  const summary = useMemo(() => {
-    // If user has already played today, don't recalculate from potentially stale state
-    // The displayedSummary will use existingResult instead
-    if (hasPlayedToday && existingResult) {
-      return {
-        score: existingResult.score ?? 0,
-        passes: existingResult.passes ?? 0,
-        skips: existingResult.skips ?? 0,
-        fails: existingResult.fails ?? 0,
-        totalTime: existingResult.totalTime ?? 0,
-        breakdown: existingResult.breakdown ?? {
-          completionBonus: 0,
-          accuracyBonus: 0,
-          skipPenalty: 0,
-          failPenalty: 0,
-          timePenalty: 0,
-          total: 0,
-        },
-      };
-    }
-    
-    // Otherwise, calculate from current state
-    const normalizedTotalTime = Math.round(totalTime * 100) / 100;
-    const breakdown = calculateScoreBreakdown({
-      completed: passes,
-      skips,
-      fails,
-      totalTime: normalizedTotalTime,
-    });
-    return {
-      score: breakdown.total,
-      passes,
-      skips,
-      fails,
-      totalTime: normalizedTotalTime,
-      breakdown,
-    };
-  }, [passes, skips, fails, totalTime, hasPlayedToday, existingResult]);
-
-  const formattedToday = useMemo(() => {
-    const [year, month, day] = todayId.split('-');
-    return `${month} ${day} ${year}`;
-  }, [todayId]);
-
-  const { completedCount, progressPercentage, nextChallengeNumber } = useMemo(() => {
-    const finishedStatuses = new Set(['passed', 'failed', 'skipped']);
-    const completed = state.statuses.filter((item) => finishedStatuses.has(item.status)).length;
-    const totalChallenges = selection.length || 1;
-    const percentage = Math.round((completed / totalChallenges) * 100);
-    const nextChallenge = Math.min(completed + 1, selection.length);
-    return {
-      completedCount: completed,
-      progressPercentage: percentage,
-      nextChallengeNumber: nextChallenge,
-    };
-  }, [selection.length, state.statuses]);
-
-  const displayedSummary = useMemo(() => {
-    if (hasPlayedToday && existingResult) {
-      const base = {
-        score: existingResult.score ?? summary.score,
-        passes: existingResult.passes ?? summary.passes,
-        skips: existingResult.skips ?? summary.skips,
-        fails: existingResult.fails ?? summary.fails,
-        totalTime: existingResult.totalTime ?? summary.totalTime,
-      };
-      const breakdown = existingResult.breakdown
-        ? existingResult.breakdown
-        : calculateScoreBreakdown({
-            completed: base.passes,
-            skips: base.skips,
-            fails: base.fails,
-            totalTime: base.totalTime,
-          });
-      return {
-        ...base,
-        breakdown,
-      };
-    }
-    return summary;
-  }, [hasPlayedToday, existingResult, summary]);
-
-  useEffect(() => {
-    // Don't sync if:
-    // - Not complete
-    // - No user
-    // - Still checking if user has already played (prevent race condition)
-    // - Already synced (localStorage flag)
-    // - Already played today (checked from Firestore)
-    // - Currently syncing or already synced
-    // - Suspicious: totalTime is 0 when complete (indicates stale state)
-    if (!isComplete || !user || checkingExistingRun || hasSyncedRun || hasPlayedToday || syncStatus === 'synced' || syncStatus === 'saving') return;
-    
-    // Additional validation: if totalTime is 0 and game is complete, this is suspicious (stale state)
-    // Only allow 0 time if it's a legitimate instant completion (very unlikely)
-    // For safety, if time is 0 and we're trying to sync, wait for hasPlayedToday check
-    if (summary.totalTime === 0 && isComplete && checkingExistingRun === false) {
-      // This is suspicious - likely stale state. Don't sync until we confirm
-      return;
-    }
-    
-    let cancelled = false;
-    async function syncResult() {
-      try {
-        // Double-check with Firestore before syncing
-        const dailyRef = doc(db, 'amerGauntlet_dailyGauntlets', todayId, 'results', user.uid);
-        const existingDaily = await getDoc(dailyRef);
-        const existingDailyData = existingDaily.exists() ? existingDaily.data() : null;
-
-        // If user already has a result, don't sync with potentially stale data
-        if (existingDailyData) {
-          if (!cancelled) {
-            markSynced(existingDailyData);
-          }
-          return;
-        }
-
-        // If totalTime is 0 and we're trying to sync, this is suspicious
-        // It likely means stale state where timestamps were invalid
-        if (summary.totalTime === 0 && isComplete) {
-          console.warn('Suspicious sync attempt with 0 time - likely stale state. Aborting.');
-          if (!cancelled) {
-            setSyncStatus('error');
-          }
-          return;
-        }
-
-        setSyncStatus('saving');
-        const runId = `${todayId}-${user.uid}`;
-        const payload = {
-          uid: user.uid,
-          displayName: user.displayName || 'Player',
-          score: summary.score,
-          passes: summary.passes,
-          skips: summary.skips,
-          fails: summary.fails,
-          totalTime: summary.totalTime,
-          breakdown: {
-            completionBonus: summary.breakdown.completionBonus,
-            accuracyBonus: summary.breakdown.accuracyBonus,
-            skipPenalty: summary.breakdown.skipPenalty,
-            failPenalty: summary.breakdown.failPenalty,
-            timePenalty: summary.breakdown.timePenalty,
-          },
-          date: todayId,
-          weekId: getWeekId(todayId),
-          completedAt: serverTimestamp(),
-        };
-
-        await setDoc(dailyRef, payload, { merge: true });
-        
-        // Only update runs collection if we're actually updating the daily result
-        const runsRef = doc(db, 'amerGauntlet_runs', runId);
-        await setDoc(runsRef, payload, { merge: true });
-
-        const userRef = doc(db, 'amerGauntlet_users', user.uid);
-        const userSnap = await getDoc(userRef);
-        const yesterday = getYesterdayId(todayId);
-        let streak = 1;
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          if (data.lastCompleted === todayId) {
-            streak = data.streak || 1;
-          } else if (data.lastCompleted === yesterday) {
-            streak = (data.streak || 0) + 1;
-          } else {
-            streak = 1;
-          }
-        }
-        await setDoc(
-          userRef,
-          {
-            displayName: user.displayName || 'Player',
-            streak,
-            lastCompleted: todayId,
-            bestScore: Math.max(summary.score, userSnap?.data()?.bestScore || 0),
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true },
-        );
-        if (!cancelled) {
-          markSynced(payload);
-        }
-      } catch (error) {
-        console.error('Failed to sync result', error);
-        if (!cancelled) setSyncStatus('error');
-      }
-    }
-
-    syncResult();
-    return () => {
-      cancelled = true;
-    };
-  }, [isComplete, user, summary, todayId, syncStatus, hasSyncedRun, hasPlayedToday, checkingExistingRun, markSynced]);
-
-  useEffect(() => {
-    let ignore = false;
-    if (!user) {
+    if (!user || !db) {
       setHasPlayedToday(false);
-      setExistingResult(null);
-      setCountdown(null);
-      setCheckingExistingRun(false);
-      setIsReady(false);
       return;
     }
-    setCheckingExistingRun(true);
+
     const dailyRef = doc(db, 'amerGauntlet_dailyGauntlets', todayId, 'results', user.uid);
-    getDoc(dailyRef)
-      .then((snapshot) => {
-        if (ignore) return;
-        if (snapshot.exists()) {
-          const existingData = snapshot.data();
-          setHasPlayedToday(true);
-          setExistingResult(existingData);
-          // Immediately mark as synced to prevent re-syncing with stale state
-          if (syncFlagKey && typeof window !== 'undefined') {
-            window.localStorage.setItem(syncFlagKey, 'true');
-          }
-          setHasSyncedRun(true);
-          setSyncStatus('synced');
-          
-          // Clear stale localStorage state that might have finishedAt set
-          // This prevents stale state from affecting calculations
-          const stateStorageKey = `amer-gauntlet-state-${todayId}`;
-          if (typeof window !== 'undefined') {
-            const staleState = window.localStorage.getItem(stateStorageKey);
-            if (staleState) {
-              try {
-                const parsed = JSON.parse(staleState);
-                // If state has finishedAt but we already have a result, clear it
-                // This prevents stale state from being used for calculations
-                if (parsed.finishedAt) {
-                  window.localStorage.removeItem(stateStorageKey);
-                }
-              } catch (e) {
-                // Ignore parse errors
-              }
-            }
-          }
-        } else {
-          setHasPlayedToday(false);
-          setExistingResult(null);
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to check today\'s run', error);
-      })
-      .finally(() => {
-        if (!ignore) {
-          setCheckingExistingRun(false);
-        }
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [user, todayId, syncFlagKey]);
-
-  useEffect(() => {
-    if (!user || hasPlayedToday || initializing || checkingExistingRun || isComplete) {
-      if (countdown !== null) {
-        setCountdown(null);
+    getDoc(dailyRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        setHasPlayedToday(true);
       }
-      if (isReady) {
-        setIsReady(false);
-      }
-      return;
-    }
-    if (!isReady) {
-      if (countdown !== null) {
-        setCountdown(null);
-      }
-      return;
-    }
-    if (countdown === null) {
-      setCountdown(3);
-    }
-  }, [user, hasPlayedToday, initializing, checkingExistingRun, isComplete, isReady, countdown]);
+    });
+  }, [user, db, todayId]);
 
+  // Load leaderboards
   useEffect(() => {
-    if (countdown === null || countdown <= 0) return undefined;
-    const timeout = globalThis.setTimeout(() => {
-      setCountdown((prev) => {
-        if (prev === null) return prev;
-        return Math.max(prev - 1, 0);
-      });
-    }, 1000);
-    return () => {
-      globalThis.clearTimeout(timeout);
-    };
-  }, [countdown]);
+    if (!db) return;
 
-  useEffect(() => {
-    setLeaderboard({ daily: [], allTime: [] });
     const dailyQuery = query(
       collection(db, 'amerGauntlet_dailyGauntlets', todayId, 'results'),
       orderBy('score', 'desc'),
-      limit(10),
+      orderBy('totalTime', 'asc')
     );
-    const allTimeQuery = query(collection(db, 'amerGauntlet_runs'), orderBy('score', 'desc'), limit(5));
+    const allTimeQuery = query(
+      collection(db, 'amerGauntlet_runs'),
+      orderBy('score', 'desc'),
+      orderBy('totalTime', 'asc')
+    );
 
-    const unsubscribeDaily = onSnapshot(
-      dailyQuery,
-      (snapshot) => {
-        setLeaderboard((prev) => ({
-          ...prev,
-          daily: snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
-        }));
-      },
-      (error) => console.error('Failed to load daily leaderboard', error),
-    );
-    const unsubscribeAllTime = onSnapshot(
-      allTimeQuery,
-      (snapshot) => {
-        setLeaderboard((prev) => ({
-          ...prev,
-          allTime: snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
-        }));
-      },
-      (error) => console.error('Failed to load all-time leaderboard', error),
-    );
+    const unsubscribeDaily = onSnapshot(dailyQuery, (snapshot) => {
+      setLeaderboard((prev) => ({
+        ...prev,
+        daily: snapshot.docs.slice(0, 10).map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        })),
+      }));
+    });
+
+    const unsubscribeAllTime = onSnapshot(allTimeQuery, (snapshot) => {
+      setLeaderboard((prev) => ({
+        ...prev,
+        allTime: snapshot.docs.slice(0, 5).map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        })),
+      }));
+    });
 
     return () => {
       unsubscribeDaily();
       unsubscribeAllTime();
     };
-  }, [todayId]);
+  }, [todayId, db]);
 
-  const canPlay = Boolean(user) && !hasPlayedToday && countdown === 0 && !isComplete;
-  const countdownActive = countdown !== null && countdown > 0;
-  const showReadyPrompt =
-    Boolean(user) &&
-    !hasPlayedToday &&
-    !isComplete &&
-    !initializing &&
-    !checkingExistingRun &&
-    countdown === null &&
-    !isReady;
-  const handlePass = () => {
-    if (!canPlay) return;
-    gauntlet.recordPass(state.currentIndex);
-  };
-  const handleFail = () => {
-    if (!canPlay) return;
-    gauntlet.recordFail(state.currentIndex);
-  };
-  const handleSkip = () => {
-    if (!canPlay) return;
-    gauntlet.recordSkip(state.currentIndex);
-  };
+  // Sync results to Firestore when complete
+  useEffect(() => {
+    if (!isComplete || !user || !db || hasPlayedToday) return;
 
-  return (
-    <section className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-      <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-3">
-            <h2 className="text-2xl font-semibold text-accent-50">Today&apos;s Gauntlet</h2>
-            <p className="text-sm uppercase tracking-[0.3em] text-tertiary-400">{formattedToday}</p>
-          </div>
-          <div className="rounded-2xl border border-tertiary-500/30 bg-primary-800/60 p-6 shadow-inner shadow-primary-800/40">
-            {initializing ? (
-              <div className="space-y-3 text-center text-sm text-quaternary-300">
-                <p>Loading your profile…</p>
-              </div>
-            ) : !user ? (
-              <div className="space-y-4 text-center">
-                <h3 className="text-3xl font-semibold text-accent-50">Sign in to play</h3>
-                <p className="text-sm text-quaternary-300">
-                  You need to be signed in to attempt today&apos;s Amer Gauntlet and post a score to the leaderboards.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => signIn()}
-                  className="rounded-full border border-tertiary-500/40 bg-accent-50/90 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-primary-800 shadow-lg shadow-primary-800/10 transition hover:-translate-y-0.5 hover:bg-accent-50 active:bg-accent-50 touch-manipulation"
-                >
-                  Sign in with Google
-                </button>
-              </div>
-            ) : checkingExistingRun ? (
-              <div className="space-y-3 text-center text-sm text-quaternary-300">
-                <p>Checking your progress…</p>
-              </div>
-            ) : hasPlayedToday && !isComplete ? (
-              <div className="space-y-4 text-center">
-                <h3 className="text-3xl font-semibold text-accent-50">You already played today</h3>
-                <p className="text-sm text-quaternary-300">
-                  Your best score for today is locked in. Come back tomorrow for a fresh gauntlet.
-                </p>
-                <div className="mx-auto grid max-w-md grid-cols-2 gap-3 text-left text-sm">
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Score</p>
-                    <p className="text-2xl font-bold text-accent-50">{formatScore(displayedSummary.score)}</p>
-                  </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Time</p>
-                    <p className="text-2xl font-bold text-accent-50">{formatDuration(displayedSummary.totalTime)}</p>
-                  </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Passes</p>
-                    <p className="text-2xl font-bold text-accent-50">{displayedSummary.passes}</p>
-                  </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Skips / Fails</p>
-                    <p className="text-2xl font-bold text-accent-50">{displayedSummary.skips} / {displayedSummary.fails}</p>
-                  </div>
-                </div>
-                <div className="mx-auto max-w-md">
-                  <ScoreBreakdownDetails summary={displayedSummary} />
-                </div>
-              </div>
-            ) : showReadyPrompt ? (
-              <div className="space-y-4 text-center">
-                <h3 className="text-3xl font-semibold text-accent-50">Ready when you are</h3>
-                <p className="text-sm text-quaternary-300">
-                  Press ready to start the countdown for today&apos;s gauntlet.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIsReady(true)}
-                  className="rounded-full border border-tertiary-500/40 bg-tertiary-400/90 px-6 py-2 text-xs font-bold uppercase tracking-[0.3em] text-primary-800 shadow-lg shadow-tertiary-500/20 transition hover:-translate-y-0.5 hover:bg-tertiary-400 active:bg-tertiary-400 touch-manipulation"
-                >
-                  I&apos;m ready
-                </button>
-              </div>
-            ) : !isComplete && (countdownActive || countdown === null) ? (
-              <div className="space-y-3 text-center text-sm text-quaternary-300">
-                {countdownActive ? (
-                  <>
-                    <p className="text-3xl font-semibold text-accent-50">Get ready…</p>
-                    <p className="text-6xl font-black text-tertiary-300">{countdown}</p>
-                    <p>Focus up! The gauntlet begins when the counter hits zero.</p>
-                  </>
-                ) : (
-                  <p>Preparing your gauntlet…</p>
-                )}
-              </div>
-            ) : currentGame && ActiveGameComponent && !isComplete ? (
-              <ActiveGameComponent
-                key={currentGame.id}
-                challenge={currentGame.challenge}
-                onPass={handlePass}
-                onFail={handleFail}
-                onSkip={handleSkip}
-              />
-            ) : (
-              <div className="space-y-4 text-center">
-                <h3 className="text-3xl font-semibold text-accent-50">Gauntlet complete</h3>
-                <p className="text-sm text-quaternary-300">
-                  {user
-                    ? 'Your score has been locked in. Come back tomorrow for the next Amer Gauntlet.'
-                    : 'Sign in to save your streak and post on the leaderboards.'}
-                </p>
-                <div className="grid grid-cols-2 gap-3 text-left text-sm">
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Score</p>
-                    <p className="text-2xl font-bold text-accent-50">{formatScore(displayedSummary.score)}</p>
-                  </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Time</p>
-                    <p className="text-2xl font-bold text-accent-50">{formatDuration(displayedSummary.totalTime)}</p>
-                  </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Passes</p>
-                    <p className="text-2xl font-bold text-accent-50">{displayedSummary.passes}</p>
-                  </div>
-                  <div className="rounded-xl border border-tertiary-500/30 bg-secondary-700/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Skips / Fails</p>
-                    <p className="text-2xl font-bold text-accent-50">{displayedSummary.skips} / {displayedSummary.fails}</p>
-                  </div>
-                </div>
-                <div className="mx-auto max-w-lg">
-                  <ScoreBreakdownDetails summary={displayedSummary} />
-                </div>
-                {syncStatus === 'saving' ? (
-                  <p className="text-xs uppercase tracking-[0.3em] text-quaternary-400">Posting to leaderboards…</p>
-                ) : syncStatus === 'error' ? (
-                  <p className="text-xs uppercase tracking-[0.3em] text-warning-400">Failed to sync score. Try refreshing.</p>
-                ) : null}
-              </div>
-            )}
-          </div>
-          <div className="rounded-2xl border border-tertiary-500/30 bg-primary-800/60 p-6 shadow-inner shadow-primary-800/40">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-tertiary-400">Progress</p>
-            <p className="mt-2 text-sm text-quaternary-300">
-              {isComplete
-                ? 'All challenges complete. Great work!'
-                : `Challenge ${nextChallengeNumber} of ${selection.length}`}
-            </p>
-            <div className="mt-4 h-2 rounded-full bg-secondary-700/40">
-              <div
-                className="h-2 rounded-full bg-tertiary-400 transition-[width]"
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-quaternary-400">
-              <span>Completed</span>
-              <span>{completedCount} / {selection.length}</span>
-            </div>
-          </div>
-        </div>
+    const score = calculateScore(passes, skips, fails, totalTime);
+    const runId = `${todayId}-${user.uid}`;
+
+    const payload = {
+      uid: user.uid,
+      displayName: user.displayName || 'Player',
+      score: score.total,
+      passes,
+      skips,
+      fails,
+      totalTime,
+      date: todayId,
+      completedAt: serverTimestamp(),
+    };
+
+    const dailyRef = doc(db, 'amerGauntlet_dailyGauntlets', todayId, 'results', user.uid);
+    const runsRef = doc(db, 'amerGauntlet_runs', runId);
+
+    setDoc(dailyRef, payload, { merge: true });
+    setDoc(runsRef, payload, { merge: true });
+  }, [isComplete, user, db, todayId, passes, skips, fails, totalTime, hasPlayedToday]);
+
+  if (initializing) {
+    return (
+      <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-8 text-center">
+        <p className="text-quaternary-300">Loading your profile…</p>
       </div>
-      <aside className="space-y-6">
-        <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
-          <h3 className="text-xl font-semibold text-accent-50">Leaderboard</h3>
-          <div className="mt-5 space-y-6">
-            <div>
-              <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400">Daily</h4>
-              <LeaderboardList entries={leaderboard.daily} />
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-8 text-center">
+        <h2 className="text-2xl font-semibold text-accent-50 mb-4">Sign in to play</h2>
+        <p className="text-quaternary-300 mb-6">
+          You need to be signed in to attempt today&apos;s Amer Gauntlet and post a score to the leaderboards.
+        </p>
+        <button
+          type="button"
+          onClick={() => signIn()}
+          className="rounded-full border border-tertiary-500/40 bg-accent-50/90 px-8 py-3 text-sm font-bold uppercase tracking-[0.3em] text-primary-800 shadow-lg transition hover:-translate-y-0.5 hover:bg-accent-50"
+        >
+          Sign in with Google
+        </button>
+      </div>
+    );
+  }
+
+  // Game hasn't started yet
+  if (!state.startedAt) {
+    return (
+      <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+        <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-8 text-center">
+          <h2 className="text-2xl font-semibold text-accent-50 mb-4">Ready to start?</h2>
+          <p className="text-quaternary-300 mb-6">
+            You&apos;ll face {selection.length} challenges today. Once you start, the timer begins!
+          </p>
+          <button
+            type="button"
+            onClick={startGame}
+            className="rounded-full border border-tertiary-500/40 bg-tertiary-400/90 px-8 py-3 text-sm font-bold uppercase tracking-[0.3em] text-primary-800 shadow-lg transition hover:-translate-y-0.5 hover:bg-tertiary-400"
+          >
+            Start Gauntlet
+          </button>
+        </div>
+        <aside className="space-y-6">
+          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+            <h3 className="text-xl font-semibold text-accent-50 mb-4">Leaderboard</h3>
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-2">Daily</h4>
+                <LeaderboardList entries={leaderboard.daily} />
+              </div>
+              <div>
+                <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-2">All Time</h4>
+                <LeaderboardList entries={leaderboard.allTime} showDate />
+              </div>
             </div>
-            <div>
-              <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400">All Time</h4>
-              <LeaderboardList entries={leaderboard.allTime} showDate />
+          </div>
+        </aside>
+      </div>
+    );
+  }
+
+  // Game is complete
+  if (isComplete) {
+    const score = calculateScore(passes, skips, fails, totalTime);
+    return (
+      <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+        <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-8">
+          <h2 className="text-3xl font-semibold text-accent-50 mb-2 text-center">Gauntlet Complete!</h2>
+          <p className="text-quaternary-300 text-center mb-6">{formatDate(todayId)}</p>
+          
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="rounded-xl border border-tertiary-500/30 bg-primary-800/60 p-4 text-center">
+              <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-1">Score</p>
+              <p className="text-3xl font-bold text-accent-50">{formatScore(score.total)}</p>
+            </div>
+            <div className="rounded-xl border border-tertiary-500/30 bg-primary-800/60 p-4 text-center">
+              <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-1">Time</p>
+              <p className="text-3xl font-bold text-accent-50">{Math.round(totalTime)}s</p>
+            </div>
+            <div className="rounded-xl border border-tertiary-500/30 bg-primary-800/60 p-4 text-center">
+              <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-1">Passes</p>
+              <p className="text-2xl font-bold text-success-400">{passes}</p>
+            </div>
+            <div className="rounded-xl border border-tertiary-500/30 bg-primary-800/60 p-4 text-center">
+              <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-1">Skips / Fails</p>
+              <p className="text-2xl font-bold text-warning-400">{skips} / {fails}</p>
             </div>
           </div>
         </div>
-      </aside>
-    </section>
-  );
+        <aside className="space-y-6">
+          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+            <h3 className="text-xl font-semibold text-accent-50 mb-4">Leaderboard</h3>
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-2">Daily</h4>
+                <LeaderboardList entries={leaderboard.daily} />
+              </div>
+              <div>
+                <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-2">All Time</h4>
+                <LeaderboardList entries={leaderboard.allTime} showDate />
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    );
+  }
+
+  // Active game
+  if (currentGame && currentGame.Component) {
+    const ActiveGameComponent = currentGame.Component;
+    const currentIndex = state.currentIndex;
+    const completed = passes + fails + skips;
+    const progress = (completed / selection.length) * 100;
+
+    return (
+      <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+        <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold text-accent-50 mb-2">
+              Challenge {currentIndex + 1} of {selection.length}
+            </h2>
+            <p className="text-tertiary-400 text-sm">{currentGame.name}</p>
+          </div>
+
+          <ActiveGameComponent
+            challenge={currentGame.challenge}
+            onPass={() => recordPass(currentIndex)}
+            onFail={() => recordFail(currentIndex)}
+            onSkip={() => recordSkip(currentIndex)}
+          />
+        </div>
+
+        <aside className="space-y-6">
+          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+            <h3 className="text-xl font-semibold text-accent-50 mb-4">Progress</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-quaternary-300">Completed</span>
+                <span className="text-accent-50">{completed} / {selection.length}</span>
+              </div>
+              <div className="h-2 rounded-full bg-primary-800/60">
+                <div
+                  className="h-2 rounded-full bg-tertiary-400 transition-[width]"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+              <div>
+                <p className="text-quaternary-400">Passes</p>
+                <p className="text-lg font-bold text-success-400">{passes}</p>
+              </div>
+              <div>
+                <p className="text-quaternary-400">Skips</p>
+                <p className="text-lg font-bold text-warning-400">{skips}</p>
+              </div>
+              <div>
+                <p className="text-quaternary-400">Fails</p>
+                <p className="text-lg font-bold text-error-400">{fails}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+            <h3 className="text-xl font-semibold text-accent-50 mb-4">Leaderboard</h3>
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-2">Daily</h4>
+                <LeaderboardList entries={leaderboard.daily} />
+              </div>
+              <div>
+                <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-2">All Time</h4>
+                <LeaderboardList entries={leaderboard.allTime} showDate />
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    );
+  }
+
+  return null;
 }

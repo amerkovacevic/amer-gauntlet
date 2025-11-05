@@ -16,16 +16,20 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userDoc = doc(db, 'amerGauntlet_users', firebaseUser.uid);
-        const snapshot = await getDoc(userDoc);
-        if (!snapshot.exists()) {
-          await setDoc(userDoc, {
-            displayName: firebaseUser.displayName || 'Adventurer',
-            streak: 0,
-            lastCompleted: null,
-            createdAt: serverTimestamp(),
-          });
+      if (firebaseUser && db) {
+        try {
+          const userDoc = doc(db, 'amerGauntlet_users', firebaseUser.uid);
+          const snapshot = await getDoc(userDoc);
+          if (!snapshot.exists()) {
+            await setDoc(userDoc, {
+              displayName: firebaseUser.displayName || 'Adventurer',
+              streak: 0,
+              lastCompleted: null,
+              createdAt: serverTimestamp(),
+            });
+          }
+        } catch (error) {
+          console.error('Failed to initialize user document:', error);
         }
       }
       setUser(firebaseUser);

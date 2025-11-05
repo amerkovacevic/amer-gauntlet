@@ -1,7 +1,7 @@
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { GauntletProvider } from './contexts/GauntletContext.jsx';
-import { GauntletPlay } from './components/GauntletPlay.jsx';
 import { Header } from './components/Header.jsx';
+import { GauntletPlay } from './components/GauntletPlay.jsx';
 
 function Background() {
   return (

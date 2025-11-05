@@ -1,37 +1,32 @@
-function xmur3(str) {
-  let h = 1779033703 ^ str.length;
-  for (let i = 0; i < str.length; i += 1) {
-    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-    h = (h << 13) | (h >>> 19);
-  }
-  return function () {
-    h = Math.imul(h ^ (h >>> 16), 2246822507);
-    h = Math.imul(h ^ (h >>> 13), 3266489909);
-    h ^= h >>> 16;
-    return h >>> 0;
-  };
-}
-
-function mulberry32(a) {
-  return function () {
-    let t = (a += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
+/**
+ * Create a seeded random number generator
+ * Same seed = same sequence of random numbers
+ */
 export function createSeededRandom(seed) {
-  const seedFn = xmur3(seed);
-  return mulberry32(seedFn());
+  let value = hashString(seed);
+  return () => {
+    value = (value * 9301 + 49297) % 233280;
+    return value / 233280;
+  };
 }
 
-export function pickFromArray(random, arr, count) {
-  const pool = [...arr];
-  const picks = [];
-  while (picks.length < count && pool.length) {
-    const idx = Math.floor(random() * pool.length);
-    picks.push(pool.splice(idx, 1)[0]);
+/**
+ * Hash a string to a number
+ */
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
   }
-  return picks;
+  return Math.abs(hash);
+}
+
+/**
+ * Pick random items from an array using seeded random
+ */
+export function pickFromArray(seededRandom, array, count) {
+  const shuffled = [...array].sort(() => seededRandom() - 0.5);
+  return shuffled.slice(0, Math.min(count, array.length));
 }
