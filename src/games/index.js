@@ -5,10 +5,14 @@
  */
 
 import { WordScramble } from './WordScramble.jsx';
-import { PatternMatch } from './PatternMatch.jsx';
-import { ReactionTime } from './ReactionTime.jsx';
-import { MemorySequence } from './MemorySequence.jsx';
-import { QuickMath } from './QuickMath.jsx';
+import { ColorWord } from './ColorWord.jsx';
+import { OrderNumbers } from './OrderNumbers.jsx';
+import { OddOneOut } from './OddOneOut.jsx';
+import { EmojiSequence } from './EmojiSequence.jsx';
+import { SynonymMatch } from './SynonymMatch.jsx';
+import { WordLength } from './WordLength.jsx';
+import { ReverseWord } from './ReverseWord.jsx';
+import { PersonalTrivia } from './PersonalTrivia.jsx';
 
 export const games = [
   {
@@ -21,39 +25,75 @@ export const games = [
     }),
   },
   {
-    id: 'pattern-match',
-    name: 'Pattern Match',
-    Component: PatternMatch,
+    id: 'color-word',
+    name: 'Color Word',
+    Component: ColorWord,
     createChallenge: (challengeId) => ({
       id: challengeId,
-      gameId: 'pattern-match',
+      gameId: 'color-word',
     }),
   },
   {
-    id: 'reaction-time',
-    name: 'Reaction Time',
-    Component: ReactionTime,
+    id: 'order-numbers',
+    name: 'Order Numbers',
+    Component: OrderNumbers,
     createChallenge: (challengeId) => ({
       id: challengeId,
-      gameId: 'reaction-time',
+      gameId: 'order-numbers',
     }),
   },
   {
-    id: 'memory-sequence',
-    name: 'Memory Sequence',
-    Component: MemorySequence,
+    id: 'odd-one-out',
+    name: 'Odd One Out',
+    Component: OddOneOut,
     createChallenge: (challengeId) => ({
       id: challengeId,
-      gameId: 'memory-sequence',
+      gameId: 'odd-one-out',
     }),
   },
   {
-    id: 'quick-math',
-    name: 'Quick Math',
-    Component: QuickMath,
+    id: 'emoji-sequence',
+    name: 'Emoji Sequence',
+    Component: EmojiSequence,
     createChallenge: (challengeId) => ({
       id: challengeId,
-      gameId: 'quick-math',
+      gameId: 'emoji-sequence',
+    }),
+  },
+  {
+    id: 'synonym-match',
+    name: 'Synonym Match',
+    Component: SynonymMatch,
+    createChallenge: (challengeId) => ({
+      id: challengeId,
+      gameId: 'synonym-match',
+    }),
+  },
+  {
+    id: 'word-length',
+    name: 'Word Length',
+    Component: WordLength,
+    createChallenge: (challengeId) => ({
+      id: challengeId,
+      gameId: 'word-length',
+    }),
+  },
+  {
+    id: 'reverse-word',
+    name: 'Reverse Word',
+    Component: ReverseWord,
+    createChallenge: (challengeId) => ({
+      id: challengeId,
+      gameId: 'reverse-word',
+    }),
+  },
+  {
+    id: 'personal-trivia',
+    name: 'Personal Trivia',
+    Component: PersonalTrivia,
+    createChallenge: (challengeId) => ({
+      id: challengeId,
+      gameId: 'personal-trivia',
     }),
   },
 ];

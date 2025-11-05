@@ -28,10 +28,21 @@ function createInitialState(gameCount) {
 export function GauntletProvider({ children }) {
   const todayId = getTodayId();
   
-  // Select 5 random games for today using seeded random (same games every day)
+  // Check for debug mode (URL parameter or localStorage)
+  const isDebugMode = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlDebug = urlParams.get('debug') === 'true';
+    const storageDebug = window.localStorage.getItem('amer-gauntlet-debug') === 'true';
+    return urlDebug || storageDebug;
+  }, []);
+  
+  // Select games for today using seeded random (same games every day)
+  // In debug mode, show all games; otherwise show 5
   const selection = useMemo(() => {
     const seeded = createSeededRandom(`gauntlet-${todayId}`);
-    const picked = pickFromArray(seeded, games, 5);
+    const gameCount = isDebugMode ? games.length : 5;
+    const picked = pickFromArray(seeded, games, gameCount);
     
     return picked.map((game, index) => ({
       id: game.id,
@@ -39,7 +50,7 @@ export function GauntletProvider({ children }) {
       Component: game.Component,
       challenge: game.createChallenge(`${todayId}-${index}`),
     }));
-  }, [todayId]);
+  }, [todayId, isDebugMode]);
 
   const [state, setState] = useState(() => createInitialState(selection.length));
   const storageKey = `amer-gauntlet-state-${todayId}`;
@@ -90,10 +101,22 @@ export function GauntletProvider({ children }) {
     const passes = state.statuses.filter((s) => s.status === STATUS_PASSED).length;
     const skips = state.statuses.filter((s) => s.status === STATUS_SKIPPED).length;
     const fails = state.statuses.filter((s) => s.status === STATUS_FAILED).length;
-    const totalTime = state.statuses.reduce((sum, s) => sum + (s.timeSpent || 0), 0);
     
-    return { passes, skips, fails, totalTime };
-  }, [state.statuses]);
+    // Calculate total time: if finished, use finishedAt - startedAt, otherwise use sum of game times
+    let totalTime = 0;
+    if (state.finishedAt && state.startedAt) {
+      totalTime = (state.finishedAt - state.startedAt) / 1000; // Convert to seconds
+    } else if (state.startedAt) {
+      // Game in progress - use sum of completed games plus current elapsed time
+      const completedTime = state.statuses.reduce((sum, s) => sum + (s.timeSpent || 0), 0);
+      const currentElapsed = state.currentGameStartedAt 
+        ? (Date.now() - state.currentGameStartedAt) / 1000 
+        : 0;
+      totalTime = completedTime + currentElapsed;
+    }
+    
+    return { passes, skips, fails, totalTime: Math.max(0, totalTime) };
+  }, [state.statuses, state.startedAt, state.finishedAt, state.currentGameStartedAt]);
 
   const handleOutcome = (index, outcome) => {
     setState((prev) => {

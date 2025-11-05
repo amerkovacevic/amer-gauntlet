@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useGauntlet } from '../contexts/GauntletContext.jsx';
 import { calculateScore, formatScore } from '../utils/scoring.js';
-import { formatDate } from '../utils/date.js';
+import { formatDate, formatDuration } from '../utils/date.js';
 import {
   collection,
   doc,
@@ -52,19 +52,41 @@ export function GauntletPlay() {
   const { passes, skips, fails, totalTime } = totals;
   const [leaderboard, setLeaderboard] = useState({ daily: [], allTime: [] });
   const [hasPlayedToday, setHasPlayedToday] = useState(false);
+  const [previousScore, setPreviousScore] = useState(null);
+  const [checkingPrevious, setCheckingPrevious] = useState(true);
 
-  // Check if user has already played today
+  // Check if user has already played today and get their score
   useEffect(() => {
     if (!user || !db) {
       setHasPlayedToday(false);
+      setPreviousScore(null);
+      setCheckingPrevious(false);
       return;
     }
 
+    setCheckingPrevious(true);
     const dailyRef = doc(db, 'amerGauntlet_dailyGauntlets', todayId, 'results', user.uid);
     getDoc(dailyRef).then((snapshot) => {
       if (snapshot.exists()) {
+        const data = snapshot.data();
         setHasPlayedToday(true);
+        setPreviousScore({
+          score: data.score || 0,
+          passes: data.passes || 0,
+          skips: data.skips || 0,
+          fails: data.fails || 0,
+          totalTime: data.totalTime || 0,
+        });
+      } else {
+        setHasPlayedToday(false);
+        setPreviousScore(null);
       }
+      setCheckingPrevious(false);
+    }).catch((error) => {
+      console.error('Error checking previous score:', error);
+      setHasPlayedToday(false);
+      setPreviousScore(null);
+      setCheckingPrevious(false);
     });
   }, [user, db, todayId]);
 
@@ -111,7 +133,7 @@ export function GauntletPlay() {
 
   // Sync results to Firestore when complete
   useEffect(() => {
-    if (!isComplete || !user || !db || hasPlayedToday) return;
+    if (!isComplete || !user || !db || hasPlayedToday || checkingPrevious) return;
 
     const score = calculateScore(passes, skips, fails, totalTime);
     const runId = `${todayId}-${user.uid}`;
@@ -123,7 +145,7 @@ export function GauntletPlay() {
       passes,
       skips,
       fails,
-      totalTime,
+      totalTime: Math.round(totalTime * 100) / 100, // Round to 2 decimal places
       date: todayId,
       completedAt: serverTimestamp(),
     };
@@ -131,9 +153,26 @@ export function GauntletPlay() {
     const dailyRef = doc(db, 'amerGauntlet_dailyGauntlets', todayId, 'results', user.uid);
     const runsRef = doc(db, 'amerGauntlet_runs', runId);
 
-    setDoc(dailyRef, payload, { merge: true });
-    setDoc(runsRef, payload, { merge: true });
-  }, [isComplete, user, db, todayId, passes, skips, fails, totalTime, hasPlayedToday]);
+    setDoc(dailyRef, payload, { merge: true })
+      .then(() => {
+        // Update local state after successful save
+        setHasPlayedToday(true);
+        setPreviousScore({
+          score: score.total,
+          passes,
+          skips,
+          fails,
+          totalTime,
+        });
+      })
+      .catch((error) => {
+        console.error('Error saving score:', error);
+      });
+    
+    setDoc(runsRef, payload, { merge: true }).catch((error) => {
+      console.error('Error saving to runs:', error);
+    });
+  }, [isComplete, user, db, todayId, passes, skips, fails, totalTime, hasPlayedToday, checkingPrevious]);
 
   if (initializing) {
     return (
@@ -163,6 +202,57 @@ export function GauntletPlay() {
 
   // Game hasn't started yet
   if (!state.startedAt) {
+    // Show previous score if user already played today
+    if (hasPlayedToday && previousScore) {
+      const score = calculateScore(previousScore.passes, previousScore.skips, previousScore.fails, previousScore.totalTime);
+      return (
+        <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-8">
+            <h2 className="text-2xl font-semibold text-accent-50 mb-2 text-center">You&apos;ve Already Played Today</h2>
+            <p className="text-quaternary-300 text-center mb-6">{formatDate(todayId)}</p>
+            
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="rounded-xl border border-tertiary-500/30 bg-primary-800/60 p-4 text-center">
+                <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-1">Score</p>
+                <p className="text-3xl font-bold text-accent-50">{formatScore(score.total)}</p>
+              </div>
+              <div className="rounded-xl border border-tertiary-500/30 bg-primary-800/60 p-4 text-center">
+                <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-1">Time</p>
+                <p className="text-3xl font-bold text-accent-50">{formatDuration(previousScore.totalTime)}</p>
+              </div>
+              <div className="rounded-xl border border-tertiary-500/30 bg-primary-800/60 p-4 text-center">
+                <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-1">Passes</p>
+                <p className="text-2xl font-bold text-success-400">{previousScore.passes}</p>
+              </div>
+              <div className="rounded-xl border border-tertiary-500/30 bg-primary-800/60 p-4 text-center">
+                <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-1">Skips / Fails</p>
+                <p className="text-2xl font-bold text-warning-400">{previousScore.skips} / {previousScore.fails}</p>
+              </div>
+            </div>
+            <p className="text-center text-sm text-quaternary-300">
+              Come back tomorrow for a new challenge!
+            </p>
+          </div>
+          <aside className="space-y-6">
+            <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+              <h3 className="text-xl font-semibold text-accent-50 mb-4">Leaderboard</h3>
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-2">Daily</h4>
+                  <LeaderboardList entries={leaderboard.daily} />
+                </div>
+                <div>
+                  <h4 className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-2">All Time</h4>
+                  <LeaderboardList entries={leaderboard.allTime} showDate />
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      );
+    }
+
+    // Show ready to start screen
     return (
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
         <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-8 text-center">
@@ -170,13 +260,18 @@ export function GauntletPlay() {
           <p className="text-quaternary-300 mb-6">
             You&apos;ll face {selection.length} challenges today. Once you start, the timer begins!
           </p>
-          <button
-            type="button"
-            onClick={startGame}
-            className="rounded-full border border-tertiary-500/40 bg-tertiary-400/90 px-8 py-3 text-sm font-bold uppercase tracking-[0.3em] text-primary-800 shadow-lg transition hover:-translate-y-0.5 hover:bg-tertiary-400"
-          >
-            Start Gauntlet
-          </button>
+          {checkingPrevious ? (
+            <p className="text-quaternary-300">Checking your progress...</p>
+          ) : (
+            <button
+              type="button"
+              onClick={startGame}
+              disabled={hasPlayedToday}
+              className="rounded-full border border-tertiary-500/40 bg-tertiary-400/90 px-8 py-3 text-sm font-bold uppercase tracking-[0.3em] text-primary-800 shadow-lg transition hover:-translate-y-0.5 hover:bg-tertiary-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Start Gauntlet
+            </button>
+          )}
         </div>
         <aside className="space-y-6">
           <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
@@ -213,7 +308,7 @@ export function GauntletPlay() {
             </div>
             <div className="rounded-xl border border-tertiary-500/30 bg-primary-800/60 p-4 text-center">
               <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-1">Time</p>
-              <p className="text-3xl font-bold text-accent-50">{Math.round(totalTime)}s</p>
+              <p className="text-3xl font-bold text-accent-50">{formatDuration(totalTime)}</p>
             </div>
             <div className="rounded-xl border border-tertiary-500/30 bg-primary-800/60 p-4 text-center">
               <p className="text-xs uppercase tracking-[0.3em] text-tertiary-400 mb-1">Passes</p>

@@ -1,0 +1,52 @@
+[
+    {
+      "question": "What city was Amer born in?",
+      "correct_answer": "Mostar",
+      "fake_answers": ["Sarajevo", "St. Louis", "Jablanica"]
+    },
+    {
+      "question": "What was Amer’s first website project?",
+      "correct_answer": "RPM Music STL LLC",
+      "fake_answers": ["KovaTMS", "Personal Portfolio", "Amer Gauntlet"]
+    },
+    {
+      "question": "What sport does Amer follow the most?",
+      "correct_answer": "Soccer",
+      "fake_answers": ["Basketball", "Tennis", "American football"]
+    },
+    {
+      "question": "What’s Amer’s favorite side project name?",
+      "correct_answer": "Amer Gauntlet",
+      "fake_answers": ["Color Crafter", "FM Team Draw", "FlickFeed"]
+    },
+    {
+      "question": "Which backend does Amer prefer?",
+      "correct_answer": "Firebase",
+      "fake_answers": ["Supabase", "PocketBase", "Appwrite"]
+    },
+    {
+      "question": "What’s Amer’s favorite CSS library?",
+      "correct_answer": "TailwindCSS",
+      "fake_answers": ["Bootstrap", "Sugma UI", "Bulma"]
+    },
+    {
+      "question": "What team does Amer usually support in the Premier League?",
+      "correct_answer": "Newcastle United",
+      "fake_answers": ["Manchester City", "Chelsea", "Liverpool"]
+    },
+    {
+      "question": "What does the “AK” in AK Tools stand for?",
+      "correct_answer": "Amer Kovacevic",
+      "fake_answers": ["Advanced Kit", "Alpha Key", "Auto Komponents"]
+    },
+    {
+        "question": "What’s the “Gauntlet” in Amer Gauntlet based on?",
+        "correct_answer": "Pirlo Gauntlet",
+        "fake_answers": ["A dream", "A coding interview buzzword", "Something learned at work"]
+      },
+      {
+        "question": "If Amer made a time-tracking app, what would it be called?",
+        "correct_answer": "Time Buddy",
+        "fake_answers": ["ClockCraft", "TickTock Pro", "HoursHub"]
+      }
+    ]
