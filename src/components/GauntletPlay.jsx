@@ -105,25 +105,89 @@ export function GauntletPlay() {
       orderBy('totalTime', 'asc')
     );
 
-    const unsubscribeDaily = onSnapshot(dailyQuery, (snapshot) => {
-      setLeaderboard((prev) => ({
-        ...prev,
-        daily: snapshot.docs.slice(0, 10).map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-        })),
-      }));
-    });
+    const unsubscribeDaily = onSnapshot(
+      dailyQuery,
+      (snapshot) => {
+        setLeaderboard((prev) => ({
+          ...prev,
+          daily: snapshot.docs.slice(0, 10).map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          })),
+        }));
+      },
+      (error) => {
+        console.error('Error loading daily leaderboard:', error);
+        // If index missing, try simpler query with just score
+        const simpleDailyQuery = query(
+          collection(db, 'amerGauntlet_dailyGauntlets', todayId, 'results'),
+          orderBy('score', 'desc')
+        );
+        onSnapshot(
+          simpleDailyQuery,
+          (snapshot) => {
+            const entries = snapshot.docs.slice(0, 10).map((docSnap) => ({
+              id: docSnap.id,
+              ...docSnap.data(),
+            }));
+            // Sort by totalTime in memory as fallback (for entries with same score)
+            entries.sort((a, b) => {
+              if (a.score !== b.score) return 0; // Already sorted by score from query
+              return (a.totalTime || Infinity) - (b.totalTime || Infinity);
+            });
+            setLeaderboard((prev) => ({
+              ...prev,
+              daily: entries,
+            }));
+          },
+          (fallbackError) => {
+            console.error('Error loading daily leaderboard (fallback):', fallbackError);
+          }
+        );
+      }
+    );
 
-    const unsubscribeAllTime = onSnapshot(allTimeQuery, (snapshot) => {
-      setLeaderboard((prev) => ({
-        ...prev,
-        allTime: snapshot.docs.slice(0, 5).map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-        })),
-      }));
-    });
+    const unsubscribeAllTime = onSnapshot(
+      allTimeQuery,
+      (snapshot) => {
+        setLeaderboard((prev) => ({
+          ...prev,
+          allTime: snapshot.docs.slice(0, 5).map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          })),
+        }));
+      },
+      (error) => {
+        console.error('Error loading all-time leaderboard:', error);
+        // If index missing, try simpler query with just score
+        const simpleAllTimeQuery = query(
+          collection(db, 'amerGauntlet_runs'),
+          orderBy('score', 'desc')
+        );
+        onSnapshot(
+          simpleAllTimeQuery,
+          (snapshot) => {
+            const entries = snapshot.docs.slice(0, 5).map((docSnap) => ({
+              id: docSnap.id,
+              ...docSnap.data(),
+            }));
+            // Sort by totalTime in memory as fallback (for entries with same score)
+            entries.sort((a, b) => {
+              if (a.score !== b.score) return 0; // Already sorted by score from query
+              return (a.totalTime || Infinity) - (b.totalTime || Infinity);
+            });
+            setLeaderboard((prev) => ({
+              ...prev,
+              allTime: entries,
+            }));
+          },
+          (fallbackError) => {
+            console.error('Error loading all-time leaderboard (fallback):', fallbackError);
+          }
+        );
+      }
+    );
 
     return () => {
       unsubscribeDaily();
@@ -153,7 +217,11 @@ export function GauntletPlay() {
     const dailyRef = doc(db, 'amerGauntlet_dailyGauntlets', todayId, 'results', user.uid);
     const runsRef = doc(db, 'amerGauntlet_runs', runId);
 
-    setDoc(dailyRef, payload, { merge: true })
+    // Save to both collections with proper error handling
+    Promise.all([
+      setDoc(dailyRef, payload, { merge: true }),
+      setDoc(runsRef, payload, { merge: true })
+    ])
       .then(() => {
         // Update local state after successful save
         setHasPlayedToday(true);
@@ -164,14 +232,19 @@ export function GauntletPlay() {
           fails,
           totalTime,
         });
+        console.log('Score saved successfully to leaderboard');
       })
       .catch((error) => {
-        console.error('Error saving score:', error);
+        console.error('Error saving score to leaderboard:', error);
+        // Provide more specific error information
+        if (error.code === 'permission-denied') {
+          console.error('Permission denied: Check Firestore security rules');
+        } else if (error.code === 'unavailable') {
+          console.error('Firestore temporarily unavailable. Score may not be saved.');
+        } else {
+          console.error('Unexpected error:', error.code, error.message);
+        }
       });
-    
-    setDoc(runsRef, payload, { merge: true }).catch((error) => {
-      console.error('Error saving to runs:', error);
-    });
   }, [isComplete, user, db, todayId, passes, skips, fails, totalTime, hasPlayedToday, checkingPrevious]);
 
   if (initializing) {
