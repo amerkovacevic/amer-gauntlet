@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
   onAuthStateChanged,
   signInWithPopup,
-  signOut,
+  signOut as firebaseSignOut,
   updateProfile,
 } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
         const credential = await signInWithPopup(auth, googleProvider);
         return credential.user;
       },
-      signOut: () => signOut(auth),
+      signOut: () => firebaseSignOut(auth),
     }),
     [user, initializing],
   );
