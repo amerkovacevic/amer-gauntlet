@@ -307,7 +307,7 @@ export function GauntletPlay() {
             </p>
           </div>
           <aside className="space-y-6">
-            <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+            <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6">
               <h3 className="text-xl font-semibold text-accent-50 mb-4">Leaderboard</h3>
               <div className="space-y-6">
                 <div>
@@ -347,7 +347,7 @@ export function GauntletPlay() {
           )}
         </div>
         <aside className="space-y-6">
-          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6">
             <h3 className="text-xl font-semibold text-accent-50 mb-4">Leaderboard</h3>
             <div className="space-y-6">
               <div>
@@ -394,7 +394,7 @@ export function GauntletPlay() {
           </div>
         </div>
         <aside className="space-y-6">
-          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6">
             <h3 className="text-xl font-semibold text-accent-50 mb-4">Leaderboard</h3>
             <div className="space-y-6">
               <div>
@@ -421,7 +421,7 @@ export function GauntletPlay() {
 
     return (
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-        <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+        <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6">
           <div className="mb-6">
             <h2 className="text-2xl font-semibold text-accent-50 mb-2">
               Challenge {currentIndex + 1} of {selection.length}
@@ -438,7 +438,7 @@ export function GauntletPlay() {
         </div>
 
         <aside className="space-y-6">
-          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6">
             <h3 className="text-xl font-semibold text-accent-50 mb-4">Progress</h3>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
@@ -468,7 +468,7 @@ export function GauntletPlay() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6 shadow-2xl shadow-tertiary-500/20">
+          <div className="rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-6">
             <h3 className="text-xl font-semibold text-accent-50 mb-4">Leaderboard</h3>
             <div className="space-y-6">
               <div>

@@ -6,8 +6,6 @@ import { GauntletPlay } from './components/GauntletPlay.jsx';
 function Background() {
   return (
     <div className="pointer-events-none fixed inset-0 overflow-hidden">
-      <div className="absolute -top-32 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-tertiary-500/20 blur-[120px]" />
-      <div className="absolute bottom-0 right-0 h-[400px] w-[400px] translate-x-1/3 translate-y-1/3 rounded-full bg-quaternary-500/20 blur-[120px]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(65,90,119,0.12),_rgba(13,27,42,0.95))]" />
     </div>
   );

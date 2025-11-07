@@ -14,7 +14,7 @@ export function Header() {
   }, []);
 
   return (
-    <header className="flex flex-col gap-6 rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-8 shadow-2xl shadow-tertiary-500/20">
+    <header className="flex flex-col gap-6 rounded-3xl border border-tertiary-500/30 bg-secondary-700/70 p-8">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-3 mb-1">
