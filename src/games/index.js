@@ -13,6 +13,7 @@ import { SynonymMatch } from './SynonymMatch.jsx';
 import { WordLength } from './WordLength.jsx';
 import { ReverseWord } from './ReverseWord.jsx';
 import { PersonalTrivia } from './PersonalTrivia.jsx';
+import { BubblePop } from './BubblePop.jsx';
 
 export const games = [
   {
@@ -94,6 +95,15 @@ export const games = [
     createChallenge: (challengeId) => ({
       id: challengeId,
       gameId: 'personal-trivia',
+    }),
+  },
+  {
+    id: 'bubble-pop',
+    name: 'Bubble Pop',
+    Component: BubblePop,
+    createChallenge: (challengeId) => ({
+      id: challengeId,
+      gameId: 'bubble-pop',
     }),
   },
 ];
