@@ -69,14 +69,14 @@ export function NumberGuess({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-accent-50 mb-2">Number Guess</h3>
-        <p className="text-quaternary-300 text-sm mb-4">Guess the 4-digit number in 6 tries!</p>
+        <h3 className="text-xl font-semibold text-primary-900 mb-2">Number Guess</h3>
+        <p className="text-primary-700 text-sm mb-4">Guess the 4-digit number in 6 tries!</p>
       </div>
 
-      <div className="bg-primary-700 p-6 rounded-xl space-y-3">
+      <div className="bg-white border border-primary-200 p-6 rounded-xl space-y-3">
         {hints.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs text-quaternary-400 mb-2">Previous attempts:</p>
+            <p className="text-xs text-primary-600 mb-2">Previous attempts:</p>
             {hints.map((hint, idx) => (
               <div key={idx} className="flex gap-2 justify-center">
                 {hint.map((h, i) => (
@@ -87,7 +87,7 @@ export function NumberGuess({ challenge, onPass, onFail, onSkip }) {
                         ? 'bg-success-500 text-white'
                         : h.status === 'wrong-pos'
                         ? 'bg-warning-500 text-white'
-                        : 'bg-primary-800 text-quaternary-400'
+                        : 'bg-primary-200 text-primary-600'
                     }`}
                   >
                     {h.digit}
@@ -107,14 +107,14 @@ export function NumberGuess({ challenge, onPass, onFail, onSkip }) {
             const val = e.target.value.replace(/\D/g, '').slice(0, 4);
             setGuess(val);
           }}
-          className="w-full p-3 rounded-lg bg-primary-900 border border-tertiary-600 text-accent-50 text-center text-2xl font-mono tracking-widest placeholder-quaternary-500 focus:outline-none focus:ring-2 focus:ring-tertiary-500"
+          className="w-full p-3 rounded-lg bg-white border border-primary-300 text-primary-900 text-center text-2xl font-mono tracking-widest placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-tertiary-500"
           placeholder="0000"
           autoFocus
           maxLength={4}
         />
         <button
           type="submit"
-          className="w-full rounded-full border border-tertiary-500/40 bg-tertiary-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-primary-800 shadow-lg transition hover:-translate-y-0.5 hover:bg-tertiary-400"
+          className="w-full rounded-full border border-primary-300 bg-tertiary-100 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-tertiary-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-tertiary-200"
         >
           Guess
         </button>
@@ -122,9 +122,9 @@ export function NumberGuess({ challenge, onPass, onFail, onSkip }) {
 
       {feedback && (
         <p className={`text-center text-sm font-semibold ${
-          feedback.includes('Correct') ? 'text-success-400' : 
-          feedback.includes('Out of') ? 'text-error-400' : 
-          'text-quaternary-300'
+          feedback.includes('Correct') ? 'text-success-700' : 
+          feedback.includes('Out of') ? 'text-error-700' : 
+          'text-primary-700'
         }`}>
           {feedback}
         </p>
@@ -132,7 +132,7 @@ export function NumberGuess({ challenge, onPass, onFail, onSkip }) {
 
       <button
         onClick={onSkip}
-        className="w-full rounded-full border border-error-500/40 bg-error-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-500"
+        className="w-full rounded-full border border-error-300 bg-error-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-600"
       >
         Skip
       </button>

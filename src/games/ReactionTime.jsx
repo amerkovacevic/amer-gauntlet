@@ -50,8 +50,8 @@ export function ReactionTime({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-accent-50 mb-2">Reaction Test</h3>
-        <p className="text-quaternary-300 text-sm mb-4">
+        <h3 className="text-xl font-semibold text-primary-900 mb-2">Reaction Test</h3>
+        <p className="text-primary-700 text-sm mb-4">
           Wait for the screen to turn green, then click as fast as you can!
         </p>
       </div>
@@ -60,32 +60,32 @@ export function ReactionTime({ challenge, onPass, onFail, onSkip }) {
         onClick={handleClick}
         className={`w-full h-64 rounded-2xl border-4 transition-all ${
           state === 'waiting'
-            ? 'bg-error-500/20 border-error-500/50'
+            ? 'bg-error-100 border-error-300'
             : state === 'ready'
             ? 'bg-success-500 border-success-500 animate-pulse'
             : state === 'done'
-            ? 'bg-tertiary-500/20 border-tertiary-500'
+            ? 'bg-tertiary-100 border-tertiary-300'
             : ''
         }`}
       >
         {state === 'waiting' && (
           <div className="text-center">
-            <div className="text-4xl font-bold text-error-400 mb-2">Wait...</div>
-            <div className="text-quaternary-300 text-sm">Don't click yet!</div>
+            <div className="text-4xl font-bold text-error-700 mb-2">Wait...</div>
+            <div className="text-primary-700 text-sm">Don't click yet!</div>
           </div>
         )}
         {state === 'ready' && (
           <div className="text-center">
-            <div className="text-4xl font-bold text-success-400 mb-2">CLICK NOW!</div>
-            <div className="text-accent-50 text-sm">As fast as you can!</div>
+            <div className="text-4xl font-bold text-white mb-2">CLICK NOW!</div>
+            <div className="text-white text-sm">As fast as you can!</div>
           </div>
         )}
         {state === 'done' && reactionTime && (
           <div className="text-center">
-            <div className="text-3xl font-bold text-accent-50 mb-2">
+            <div className="text-3xl font-bold text-primary-900 mb-2">
               {reactionTime}ms
             </div>
-            <div className="text-quaternary-300 text-sm">
+            <div className="text-primary-700 text-sm">
               {reactionTime < 300 ? 'Excellent!' : reactionTime < 500 ? 'Good!' : 'Too slow'}
             </div>
           </div>
@@ -94,7 +94,7 @@ export function ReactionTime({ challenge, onPass, onFail, onSkip }) {
 
       <button
         onClick={onSkip}
-        className="w-full rounded-full border border-error-500/40 bg-error-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-500"
+        className="w-full rounded-full border border-error-300 bg-error-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-600"
       >
         Skip
       </button>

@@ -97,11 +97,11 @@ export function PersonalTrivia({ challenge, onPass, onFail, onSkip }) {
     <div className="space-y-6">
       <div className="text-center">
         <h3 className="text-xl font-semibold text-accent-50 mb-2">Personal Trivia</h3>
-        <p className="text-quaternary-300 text-sm mb-4">How well do you know Amer?</p>
+        <p className="text-primary-700 text-sm mb-4">How well do you know Amer?</p>
       </div>
 
-      <div className="bg-primary-700 p-6 rounded-xl">
-        <p className="text-lg font-semibold text-accent-50 mb-6 text-center">
+      <div className="bg-white border border-primary-200 p-6 rounded-xl">
+        <p className="text-lg font-semibold text-primary-900 mb-6 text-center">
           {currentQuestion.question}
         </p>
 
@@ -114,12 +114,12 @@ export function PersonalTrivia({ challenge, onPass, onFail, onSkip }) {
               className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
                 selected === answer
                   ? answer === currentQuestion.correct_answer
-                    ? 'border-success-500 bg-success-500/20'
-                    : 'border-error-500 bg-error-500/20'
-                  : 'border-tertiary-600 hover:border-tertiary-400 bg-primary-800'
+                    ? 'border-success-400 bg-success-100'
+                    : 'border-error-400 bg-error-100'
+                  : 'border-primary-300 hover:border-primary-400 bg-white'
               } ${selected !== null ? 'opacity-50' : 'hover:scale-[1.02]'}`}
             >
-              <p className="font-medium text-accent-50">{answer}</p>
+              <p className="font-medium text-primary-900">{answer}</p>
             </button>
           ))}
         </div>
@@ -128,8 +128,8 @@ export function PersonalTrivia({ challenge, onPass, onFail, onSkip }) {
       {feedback && (
         <div className={`text-center text-sm font-semibold p-4 rounded-xl ${
           feedback.includes('Correct')
-            ? 'bg-success-500/20 text-success-400 border border-success-500/40'
-            : 'bg-error-500/20 text-error-400 border border-error-500/40'
+            ? 'bg-success-100 text-success-700 border border-success-300'
+            : 'bg-error-100 text-error-700 border border-error-300'
         }`}>
           {feedback}
         </div>
@@ -138,7 +138,7 @@ export function PersonalTrivia({ challenge, onPass, onFail, onSkip }) {
       <button
         onClick={onSkip}
         disabled={selected !== null}
-        className="w-full rounded-full border border-error-500/40 bg-error-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-500 disabled:opacity-50"
+        className="w-full rounded-full border border-error-300 bg-error-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-600 disabled:opacity-50"
       >
         Skip
       </button>

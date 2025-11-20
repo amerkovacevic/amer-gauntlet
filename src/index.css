@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  @apply bg-primary-800 text-accent-50 font-sans min-h-screen antialiased;
+  @apply bg-accent-50 text-primary-900 font-sans min-h-screen antialiased;
 }
 
 #root {

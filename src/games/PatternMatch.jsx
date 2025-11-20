@@ -36,28 +36,28 @@ export function PatternMatch({ challenge, onPass, onFail, onSkip }) {
     }
   };
 
-  if (!pattern) return <div className="text-quaternary-300">Loading...</div>;
+  if (!pattern) return <div className="text-primary-700">Loading...</div>;
 
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-accent-50 mb-2">Find the Pattern</h3>
-        <p className="text-quaternary-300 text-sm mb-4">
+        <h3 className="text-xl font-semibold text-primary-900 mb-2">Find the Pattern</h3>
+        <p className="text-primary-700 text-sm mb-4">
           What number comes next?
         </p>
         <div className="flex items-center justify-center gap-4 mb-6">
           {pattern.sequence.map((num, i) => (
             <div key={i} className="flex items-center gap-2">
-              <div className="rounded-lg border-2 border-tertiary-400 bg-tertiary-500/20 px-4 py-2 text-2xl font-bold text-accent-50 min-w-[60px]">
+              <div className="rounded-lg border-2 border-tertiary-400 bg-tertiary-100 px-4 py-2 text-2xl font-bold text-primary-900 min-w-[60px]">
                 {num}
               </div>
               {i < pattern.sequence.length - 1 && (
-                <span className="text-tertiary-400 text-xl">→</span>
+                <span className="text-primary-600 text-xl">→</span>
               )}
             </div>
           ))}
-          <span className="text-tertiary-400 text-xl">→</span>
-          <div className="rounded-lg border-2 border-dashed border-tertiary-400/50 bg-primary-800/40 px-4 py-2 text-2xl font-bold text-quaternary-400 min-w-[60px]">
+          <span className="text-primary-600 text-xl">→</span>
+          <div className="rounded-lg border-2 border-dashed border-primary-300 bg-accent-100 px-4 py-2 text-2xl font-bold text-primary-600 min-w-[60px]">
             ?
           </div>
         </div>
@@ -69,26 +69,26 @@ export function PatternMatch({ challenge, onPass, onFail, onSkip }) {
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="Your answer"
-          className="w-full rounded-lg border border-tertiary-500/30 bg-primary-800/60 px-4 py-3 text-center text-lg font-semibold text-accent-50 placeholder-quaternary-400 focus:outline-none focus:ring-2 focus:ring-tertiary-400"
+          className="w-full rounded-lg border border-primary-300 bg-white px-4 py-3 text-center text-lg font-semibold text-primary-900 placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-tertiary-400"
           autoFocus
         />
         <div className="flex gap-3">
           <button
             type="submit"
-            className="flex-1 rounded-full border border-success-500/40 bg-success-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-success-500"
+            className="flex-1 rounded-full border border-success-300 bg-success-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-success-600"
           >
             Submit
           </button>
           <button
             type="button"
             onClick={onSkip}
-            className="rounded-full border border-error-500/40 bg-error-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-500"
+            className="rounded-full border border-error-300 bg-error-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-600"
           >
             Skip
           </button>
         </div>
         {attempts > 0 && (
-          <p className="text-center text-sm text-warning-400">
+          <p className="text-center text-sm text-warning-700">
             Wrong! Try again.
           </p>
         )}

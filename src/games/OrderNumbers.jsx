@@ -51,13 +51,13 @@ export function OrderNumbers({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-accent-50 mb-2">Order Numbers</h3>
-        <p className="text-quaternary-300 text-sm mb-4">
+        <h3 className="text-xl font-semibold text-primary-900 mb-2">Order Numbers</h3>
+        <p className="text-primary-700 text-sm mb-4">
           Click numbers in {direction === 'asc' ? 'ascending' : 'descending'} order!
         </p>
       </div>
 
-      <div className="bg-primary-700 p-6 rounded-xl">
+      <div className="bg-white border border-primary-200 p-6 rounded-xl">
         <div className="flex flex-wrap gap-3 justify-center mb-4">
           {numbers.map((num) => (
             <button
@@ -66,8 +66,8 @@ export function OrderNumbers({ challenge, onPass, onFail, onSkip }) {
               disabled={ordered.includes(num)}
               className={`w-16 h-16 rounded-xl font-bold text-xl transition-all ${
                 ordered.includes(num)
-                  ? 'bg-tertiary-500 text-primary-800 opacity-50 cursor-not-allowed'
-                  : 'bg-primary-800 text-accent-50 hover:bg-tertiary-600 hover:scale-105 border-2 border-tertiary-600'
+                  ? 'bg-tertiary-100 text-tertiary-700 opacity-50 cursor-not-allowed'
+                  : 'bg-white text-primary-900 hover:bg-accent-100 hover:scale-105 border-2 border-primary-300'
               }`}
             >
               {num}
@@ -76,13 +76,13 @@ export function OrderNumbers({ challenge, onPass, onFail, onSkip }) {
         </div>
 
         {ordered.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-tertiary-600">
-            <p className="text-xs text-quaternary-400 mb-2">Your order:</p>
+          <div className="mt-4 pt-4 border-t border-primary-300">
+            <p className="text-xs text-primary-600 mb-2">Your order:</p>
             <div className="flex gap-2 justify-center">
               {ordered.map((num, idx) => (
                 <div
                   key={idx}
-                  className="w-12 h-12 rounded-lg bg-tertiary-500 text-primary-800 font-bold text-lg flex items-center justify-center"
+                  className="w-12 h-12 rounded-lg bg-tertiary-100 text-tertiary-700 font-bold text-lg flex items-center justify-center"
                 >
                   {num}
                 </div>
@@ -90,7 +90,7 @@ export function OrderNumbers({ challenge, onPass, onFail, onSkip }) {
             </div>
             <button
               onClick={handleReset}
-              className="mt-3 text-xs text-quaternary-300 hover:text-accent-50"
+              className="mt-3 text-xs text-primary-600 hover:text-primary-900"
             >
               Reset
             </button>
@@ -100,7 +100,7 @@ export function OrderNumbers({ challenge, onPass, onFail, onSkip }) {
 
       {feedback && (
         <p className={`text-center text-sm font-semibold ${
-          feedback.includes('Correct') ? 'text-success-400' : 'text-error-400'
+          feedback.includes('Correct') ? 'text-success-700' : 'text-error-700'
         }`}>
           {feedback}
         </p>
@@ -108,7 +108,7 @@ export function OrderNumbers({ challenge, onPass, onFail, onSkip }) {
 
       <button
         onClick={onSkip}
-        className="w-full rounded-full border border-error-500/40 bg-error-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-500"
+        className="w-full rounded-full border border-error-300 bg-error-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-600"
       >
         Skip
       </button>

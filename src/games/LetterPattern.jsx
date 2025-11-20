@@ -45,19 +45,19 @@ export function LetterPattern({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-accent-50 mb-2">Letter Pattern</h3>
-        <p className="text-quaternary-300 text-sm mb-4">Complete the pattern!</p>
+        <h3 className="text-xl font-semibold text-primary-900 mb-2">Letter Pattern</h3>
+        <p className="text-primary-700 text-sm mb-4">Complete the pattern!</p>
       </div>
 
-      <div className="bg-primary-700 p-8 rounded-xl text-center">
+      <div className="bg-white border border-primary-200 p-8 rounded-xl text-center">
         <div className="flex gap-4 justify-center items-center">
           {pattern.sequence.map((letter, idx) => (
             <div
               key={idx}
               className={`w-16 h-16 rounded-xl flex items-center justify-center font-bold text-3xl ${
                 letter === '?'
-                  ? 'bg-primary-800 border-2 border-tertiary-500 border-dashed'
-                  : 'bg-tertiary-500 text-primary-800'
+                  ? 'bg-white border-2 border-primary-300 border-dashed'
+                  : 'bg-tertiary-100 text-tertiary-700'
               }`}
             >
               {letter}
@@ -74,14 +74,14 @@ export function LetterPattern({ challenge, onPass, onFail, onSkip }) {
             const val = e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 1).toUpperCase();
             setGuess(val);
           }}
-          className="w-full p-3 rounded-lg bg-primary-900 border border-tertiary-600 text-accent-50 text-center text-4xl font-bold tracking-widest placeholder-quaternary-500 focus:outline-none focus:ring-2 focus:ring-tertiary-500 uppercase"
+          className="w-full p-3 rounded-lg bg-white border border-primary-300 text-primary-900 text-center text-4xl font-bold tracking-widest placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-tertiary-500 uppercase"
           placeholder="?"
           autoFocus
           maxLength={1}
         />
         <button
           type="submit"
-          className="w-full rounded-full border border-tertiary-500/40 bg-tertiary-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-primary-800 shadow-lg transition hover:-translate-y-0.5 hover:bg-tertiary-400"
+          className="w-full rounded-full border border-primary-300 bg-tertiary-100 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-tertiary-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-tertiary-200"
         >
           Submit
         </button>
@@ -89,7 +89,7 @@ export function LetterPattern({ challenge, onPass, onFail, onSkip }) {
 
       {feedback && (
         <p className={`text-center text-sm font-semibold ${
-          feedback.includes('Correct') ? 'text-success-400' : 'text-error-400'
+          feedback.includes('Correct') ? 'text-success-700' : 'text-error-700'
         }`}>
           {feedback}
         </p>
@@ -97,7 +97,7 @@ export function LetterPattern({ challenge, onPass, onFail, onSkip }) {
 
       <button
         onClick={onSkip}
-        className="w-full rounded-full border border-error-500/40 bg-error-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-500"
+        className="w-full rounded-full border border-error-300 bg-error-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-600"
       >
         Skip
       </button>

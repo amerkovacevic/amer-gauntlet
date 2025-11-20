@@ -71,20 +71,20 @@ export function Anagram({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-accent-50 mb-2">Anagram</h3>
-        <p className="text-quaternary-300 text-sm mb-4">Rearrange the letters to form a word!</p>
+        <h3 className="text-xl font-semibold text-primary-900 mb-2">Anagram</h3>
+        <p className="text-primary-700 text-sm mb-4">Rearrange the letters to form a word!</p>
       </div>
 
-      <div className="bg-primary-700 p-6 rounded-xl">
+      <div className="bg-white border border-primary-200 p-6 rounded-xl">
         <div className="mb-4 min-h-[60px] flex items-center justify-center gap-2 flex-wrap">
           {selected.length === 0 ? (
-            <p className="text-quaternary-400 text-sm">Select letters to form a word</p>
+            <p className="text-primary-600 text-sm">Select letters to form a word</p>
           ) : (
             selected.map((item, idx) => (
               <button
                 key={idx}
                 onClick={() => handleRemove(idx)}
-                className="w-12 h-12 rounded-lg bg-tertiary-500 text-primary-800 font-bold text-xl hover:bg-tertiary-400 transition"
+                className="w-12 h-12 rounded-lg bg-tertiary-100 text-tertiary-700 font-bold text-xl hover:bg-tertiary-200 transition"
               >
                 {item.letter}
               </button>
@@ -97,7 +97,7 @@ export function Anagram({ challenge, onPass, onFail, onSkip }) {
             <button
               key={index}
               onClick={() => handleLetterClick(letter, index)}
-              className="w-12 h-12 rounded-lg bg-primary-800 border-2 border-tertiary-600 text-accent-50 font-bold text-xl hover:bg-tertiary-600 hover:border-tertiary-400 transition"
+              className="w-12 h-12 rounded-lg bg-white border-2 border-primary-300 text-primary-900 font-bold text-xl hover:bg-accent-100 hover:border-tertiary-400 transition"
             >
               {letter}
             </button>
@@ -107,7 +107,7 @@ export function Anagram({ challenge, onPass, onFail, onSkip }) {
 
       {feedback && (
         <p className={`text-center text-sm font-semibold ${
-          feedback.includes('Correct') ? 'text-success-400' : 'text-error-400'
+          feedback.includes('Correct') ? 'text-success-700' : 'text-error-700'
         }`}>
           {feedback}
         </p>
@@ -115,7 +115,7 @@ export function Anagram({ challenge, onPass, onFail, onSkip }) {
 
       <button
         onClick={onSkip}
-        className="w-full rounded-full border border-error-500/40 bg-error-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-500"
+        className="w-full rounded-full border border-error-300 bg-error-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-600"
       >
         Skip
       </button>

@@ -109,41 +109,41 @@ export function BubblePop({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-accent-50 mb-2">Bubble Pop</h3>
-        <p className="text-quaternary-300 text-sm mb-4">
+        <h3 className="text-xl font-semibold text-primary-900 mb-2">Bubble Pop</h3>
+        <p className="text-primary-700 text-sm mb-4">
           Tap {TARGET_SCORE} bubbles before {MAX_MISSES} escape!
         </p>
       </div>
 
       {!gameStarted ? (
-        <div className="bg-primary-700 rounded-2xl p-12 text-center space-y-6">
+        <div className="bg-white border border-primary-200 rounded-2xl p-12 text-center space-y-6">
           <div className="text-6xl mb-4">🫧</div>
-          <p className="text-quaternary-300 text-sm">
+          <p className="text-primary-700 text-sm">
             Bubbles will fall from the top. Tap them before they reach the bottom!
           </p>
           <button
             onClick={startGame}
-            className="w-full rounded-full border border-success-500/40 bg-success-500/90 px-6 py-4 text-lg font-bold uppercase tracking-[0.3em] text-white transition hover:bg-success-500"
+            className="w-full rounded-full border border-success-300 bg-success-500 px-6 py-4 text-lg font-bold uppercase tracking-[0.3em] text-white transition hover:bg-success-600"
           >
             Start Game
           </button>
         </div>
       ) : (
         <>
-          <div className="flex justify-between items-center bg-primary-700 rounded-xl px-6 py-3">
+          <div className="flex justify-between items-center bg-white border border-primary-200 rounded-xl px-6 py-3">
             <div>
-              <span className="text-xs text-quaternary-400 uppercase">Score</span>
-              <div className="text-2xl font-bold text-success-400">{score}/{TARGET_SCORE}</div>
+              <span className="text-xs text-primary-600 uppercase">Score</span>
+              <div className="text-2xl font-bold text-success-700">{score}/{TARGET_SCORE}</div>
             </div>
             <div>
-              <span className="text-xs text-quaternary-400 uppercase">Missed</span>
-              <div className="text-2xl font-bold text-error-400">{missed}/{MAX_MISSES}</div>
+              <span className="text-xs text-primary-600 uppercase">Missed</span>
+              <div className="text-2xl font-bold text-error-700">{missed}/{MAX_MISSES}</div>
             </div>
           </div>
 
           <div
             ref={containerRef}
-            className="relative bg-gradient-to-b from-primary-700 to-primary-800 rounded-2xl border-2 border-tertiary-500/30 overflow-hidden"
+            className="relative bg-gradient-to-b from-accent-100 to-accent-200 rounded-2xl border-2 border-primary-300 overflow-hidden"
             style={{ width: GAME_WIDTH, height: GAME_HEIGHT, margin: '0 auto' }}
           >
             {bubbles.map((bubble) => (
@@ -177,13 +177,13 @@ export function BubblePop({ challenge, onPass, onFail, onSkip }) {
                     <>
                       <div className="text-6xl">🎉</div>
                       <div className="text-2xl font-bold text-success-400">Victory!</div>
-                      <div className="text-quaternary-300">Score: {score}</div>
+                      <div className="text-accent-50">Score: {score}</div>
                     </>
                   ) : (
                     <>
                       <div className="text-6xl">💥</div>
                       <div className="text-2xl font-bold text-error-400">Too Many Missed!</div>
-                      <div className="text-quaternary-300">Score: {score}/{TARGET_SCORE}</div>
+                      <div className="text-accent-50">Score: {score}/{TARGET_SCORE}</div>
                     </>
                   )}
                 </div>
@@ -195,7 +195,7 @@ export function BubblePop({ challenge, onPass, onFail, onSkip }) {
 
       <button
         onClick={onSkip}
-        className="w-full rounded-full border border-error-500/40 bg-error-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-500"
+        className="w-full rounded-full border border-error-300 bg-error-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-600"
       >
         Skip
       </button>

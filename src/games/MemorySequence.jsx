@@ -64,8 +64,8 @@ export function MemorySequence({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-accent-50 mb-2">Memory Sequence</h3>
-        <p className="text-quaternary-300 text-sm mb-4">
+        <h3 className="text-xl font-semibold text-primary-900 mb-2">Memory Sequence</h3>
+        <p className="text-primary-700 text-sm mb-4">
           Watch the sequence, then repeat it!
         </p>
       </div>
@@ -84,7 +84,7 @@ export function MemorySequence({ challenge, onPass, onFail, onSkip }) {
               disabled={showSequence}
               className={`h-24 rounded-xl border-2 transition-all ${
                 isHighlighted
-                  ? `${color.class} border-accent-50 scale-110 shadow-lg`
+                  ? `${color.class} border-primary-900 scale-110 shadow-lg`
                   : `${color.class} opacity-30`
               } ${
                 showSequence ? 'cursor-not-allowed' : 'hover:scale-105 cursor-pointer hover:opacity-60'
@@ -101,19 +101,19 @@ export function MemorySequence({ challenge, onPass, onFail, onSkip }) {
       </div>
 
       {showSequence && (
-        <p className="text-center text-quaternary-300 text-sm">
+        <p className="text-center text-primary-700 text-sm">
           Watch carefully... ({highlightIndex + 1}/{sequence.length})
         </p>
       )}
       {!showSequence && (
-        <p className="text-center text-quaternary-300 text-sm">
+        <p className="text-center text-primary-700 text-sm">
           Now repeat the sequence ({userSequence.length}/{sequence.length})
         </p>
       )}
 
       <button
         onClick={onSkip}
-        className="w-full rounded-full border border-error-500/40 bg-error-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-500"
+        className="w-full rounded-full border border-error-300 bg-error-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-600"
       >
         Skip
       </button>

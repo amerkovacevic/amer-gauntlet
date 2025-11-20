@@ -62,11 +62,11 @@ export function EmojiSequence({ challenge, onPass, onFail, onSkip }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-accent-50 mb-2">Emoji Sequence</h3>
-        <p className="text-quaternary-300 text-sm mb-4">Complete the emoji pattern!</p>
+        <h3 className="text-xl font-semibold text-primary-900 mb-2">Emoji Sequence</h3>
+        <p className="text-primary-700 text-sm mb-4">Complete the emoji pattern!</p>
       </div>
 
-      <div className="bg-primary-700 p-8 rounded-xl">
+      <div className="bg-white border border-primary-200 p-8 rounded-xl">
         <div className="flex gap-4 justify-center items-center mb-6">
           {puzzle.sequence.map((emoji, idx) => (
             <div
@@ -87,9 +87,9 @@ export function EmojiSequence({ challenge, onPass, onFail, onSkip }) {
               className={`p-6 rounded-xl border-2 transition-all text-4xl ${
                 selected === emoji
                   ? emoji === puzzle.answer
-                    ? 'border-success-500 bg-success-500/20'
-                    : 'border-error-500 bg-error-500/20'
-                  : 'border-tertiary-600 hover:border-tertiary-400 bg-primary-800'
+                    ? 'border-success-400 bg-success-100'
+                    : 'border-error-400 bg-error-100'
+                  : 'border-primary-300 hover:border-primary-400 bg-white'
               } ${selected !== null ? 'opacity-50' : ''}`}
             >
               {emoji}
@@ -100,7 +100,7 @@ export function EmojiSequence({ challenge, onPass, onFail, onSkip }) {
 
       {feedback && (
         <p className={`text-center text-sm font-semibold ${
-          feedback.includes('Correct') ? 'text-success-400' : 'text-error-400'
+          feedback.includes('Correct') ? 'text-success-700' : 'text-error-700'
         }`}>
           {feedback}
         </p>
@@ -109,7 +109,7 @@ export function EmojiSequence({ challenge, onPass, onFail, onSkip }) {
       <button
         onClick={onSkip}
         disabled={selected !== null}
-        className="w-full rounded-full border border-error-500/40 bg-error-500/90 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-500 disabled:opacity-50"
+        className="w-full rounded-full border border-error-300 bg-error-500 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white transition hover:bg-error-600 disabled:opacity-50"
       >
         Skip
       </button>
